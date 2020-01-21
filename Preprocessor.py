@@ -19,6 +19,7 @@
 # natural upperbound to the upperbound with OCAES incorporated for each # of 
 # TLs are stored.
 ################################################################################
+# Reads-in data/data.csv file
 def data_generator():
 	from os import chdir
 	from os import getcwd
@@ -36,6 +37,7 @@ def data_generator():
 	chdir(default)
 	return data
 
+# Reads-in data/wind.csv data file
 def wind_generator():
 	from os import chdir
 	from os import getcwd
@@ -53,6 +55,7 @@ def wind_generator():
 	chdir(default)
 	return wind
 
+# Reads-in data/wave.csv data file (currently unused)
 def wave_generator():
 	from os import chdir
 	from os import getcwd
@@ -135,12 +138,15 @@ def CF_interval_OCAES(CF_natural_up, CF_OCAES_up):
 
 
 if __name__ == '__main__':
-	import csv
-	from IPython import embed as II
+	# import csv
+	# from IPython import embed as II
 	from os import getcwd
 	from sys import argv
-	
+
+	# Read-in data
 	data	= data_generator()
+
+	# Assign data to local variables
 	Xw1 	= data['Xw1']
 	etaT1 	= data['etaT1']
 	C1 		= data['C1']
@@ -165,11 +171,13 @@ if __name__ == '__main__':
 	Ls	 	= data['Ls']
 	s0 		= data['s0']
 
+	# Derived variables
 	CCR		= r*(1 + r)**L/((1 + r)**L - 1)
 	T		= int(T)
 	Xt0		= int(Xt0)
 	steps	= 200/Xt0
 
+	# Read-in wind data (wave data is not used, but file is still expected)
 	WindMode	= True
 	WaveMode	= False
 	if argv[1] == 'W':

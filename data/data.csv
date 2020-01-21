@@ -1,29 +1,29 @@
-Xw1,200,MW
-etaT1,1,dimensionless
-C1,1317368294,$
-F1,10666000,$/yr
-V1,0,$/MWh
-Xw2,0,MW
-etaT2,1,dimensionless
-C2,0,$
-F2,0,$/yr
-V2,0,$/MWh
-Xc,0.5,dimensionless
-Xe,0.5,dimensionless
-etaC,0.836660027,dimensionless
-etaE,0.836660027,dimensionless
-Cl,1.20E+06,$/unit
-Cs,10000,$/MWh
-Xt0,1,MW
-etaT0,1,dimensionless
-Cgt,974000,$/MW
-Fgt,6980,$/MW-yr
-Vgt,14.7,$/MWh
-etagt,0.3144831,dimensionless
-Cng,4.32,$/GJ
-T,8760,h/yr
-r,0.1,yr^-1
-rgt,0.05,yr^-1
-L,20,yr
-Ls,50,yr
-s0,0,MWh
+Xw1,200,MW,Wind farm - capacity
+etaT1,1,dimensionless,Transmission line efficiency - wind farm to collection point
+C1,1317368294,$,"Wind module - capital cost, derived"
+F1,10666000,$/yr,"Wind module - fixed O&M cost, derived"
+V1,0,$/MWh,Wind module - variable cost
+Xw2,0,MW,Wave module - capacity
+etaT2,1,dimensionless,Transmission line efficiency - wave farm to collection point
+C2,0,$,"Wave module - capital cost, derived"
+F2,0,$/yr,"Wave module - fixed O&M cost, derived"
+V2,0,$/MWh,Wave module - variable cost
+Xc,0.5,dimensionless,Compressor - capacity
+Xe,0.5,dimensionless,Expander - capacity
+etaC,0.836660027,dimensionless,Compressor - efficiency
+etaE,0.836660027,dimensionless,Expander - efficiency
+Cl,1.20E+06,$/unit,Liquid piston - capital cost
+Cs,10000,$/MWh,Undersea storage - capital cost
+Xt0,1,MW,Step size
+etaT0,1,dimensionless,Transmission line efficiency - collection point to grid
+Cgt,974000,$/MW,Gas turbine - capital cost
+Fgt,6980,$/MW-yr,Gas turbine - fixed O&M cost
+Vgt,14.7,$/MWh,Gas turbine - variable cost
+etagt,0.3144831,dimensionless,Gas turbine  - efficiency
+Cng,4.32,$/GJ,Natural gas price
+T,8760,h/yr,Hours in a year
+r,0.1,yr^-1,Discount rate for wind farms and OCAES
+rgt,0.05,yr^-1,Discount rate for gas turbines
+L,20,yr,Lifetime for all but storage reservoir
+Ls,50,yr,Lifetime of storage reservoir
+s0,0,MWh,Initial energy stored
