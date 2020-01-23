@@ -128,17 +128,16 @@ os.chdir(".//raw_data//wind_turbine")
 df_wt = pd.read_csv('power_curve_NREL5MW.csv')
 os.chdir(wrkdir)
 
-# rerate power curve for a 5.5 MW turbine
-old_rating = 5.0 # MW
-new_rating = 5.5 # MW
+#  wind turbine rating
+rating = 5.0 # MW
 
-# apply interpolation function of the power curve to wind speed data and scale to new rating
-pwr = np.interp(df_ws.values, df_wt.windspeed_ms, df_wt.power_kW, left= 0.0, right = old_rating)/ 1000.0 * new_rating / old_rating
+# apply interpolation function of the power curve to wind speed data and convert from kW to MW
+pwr = np.interp(df_ws.values, df_wt.windspeed_ms, df_wt.power_kW, left= 0.0, right = rating)/ 1000.0
 # save to df_ws and drop wind speed column
 df_ws['power'] = pwr
 df_ws = df_ws.drop(columns = [' wind speed (m/s)'])
 
 # save and plot
-df_ws.to_csv('wind_power_5_5MW.csv')
+df_ws.to_csv('wind_power_5MW.csv')
 df_ws.plot()
-plt.savefig('wind_power_5_5MW.png')
+plt.savefig('wind_power_5MW.png')
