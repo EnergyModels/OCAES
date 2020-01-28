@@ -22,7 +22,7 @@ heat_rates = {'Coal': 10015, 'Gas': 11138, 'Hydro': 0.0, 'Multiple Fuels': 13352
               'Other': 0.0, 'Other Renewables': 0.0, 'Solar': 0.0, 'Storage': 0.0, 'Wind': 0.0}
 
 # ----------------------------------------
-# PJM
+# Load PJM data
 # ----------------------------------------
 os.chdir(".//raw_data//PJM")
 df_price = pd.read_csv('2019_rt_hrl_lmps.csv')  # $/MWh
