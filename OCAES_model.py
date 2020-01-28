@@ -98,8 +98,8 @@ def create_model():
     k = 1.4 # dimensionless gas constant
     R_const = 8.314 # kJ/kmol-K
     R_air = R_const / 28.97 # kJ/kg-K
-    W_CMP = s*k*R*T_amb/(k-1) * ((P_res/P_amb)**((k-1)/(eta_CMP*s*k))-1.0)*2.78e-7 # Specific work (MWh/kg)
-    W_EXP = s*k*R*T_amb/(k-1) * ((P_res/P_amb)**(eta_EXP*(k-1)/(s*k))-1.0)*2.78e-7 # Specific work (MWh/kg)
+    W_CMP = s*k*R_air*T_amb/(k-1) * ((P_res/P_amb)**((k-1)/(eta_CMP*s*k))-1.0)*2.78e-7 # Specific work (MWh/kg)
+    W_EXP = s*k*R_air*T_amb/(k-1) * ((P_res/P_amb)**(eta_EXP*(k-1)/(s*k))-1.0)*2.78e-7 # Specific work (MWh/kg)
     print("W_CMP []" + str(W_CMP))
     print("W_EXP []" + str(W_EXP))
 

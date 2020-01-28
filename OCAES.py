@@ -84,5 +84,5 @@ if __name__ == '__main__':
     # Combine outputs into single dataframe and save
     df = pd.DataFrame(output)
     # df = df.transpose()
-    os.chdir('results')
+    # os.chdir('results')
     df.to_csv('results.csv')
