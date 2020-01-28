@@ -133,7 +133,7 @@ def create_model():
     model.F_WIND = Param(initialize=F_WIND)
     model.V_WIND = Param(initialize=V_WIND)
     model.C_WELL = Param(initialize=C_WELL, mutable = True)
-    model.C_MACHINE = Param(initialize=C_MACHINE)
+    model.C_MACHINE = Param(initialize=C_MACHINE, mutable = True)
     model.F_OCAES = Param(initialize=F_OCAES)
     model.V_OCAES = Param(initialize=V_OCAES)
     model.CCR = Param(initialize=CCR)
