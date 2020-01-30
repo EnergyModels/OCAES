@@ -15,8 +15,8 @@ def parameterSweep(model, inputs):
     instance = model.create_instance(report_timing=True)
 
     # set values
-    instance.PRICE_MULTIPLIER.set_value(inputs['PRICE_MULTIPLIER'])
-    instance.GRID_RAMP_RATE.set_value(inputs['GRID_RAMP_RATE'])
+    # instance.PRICE_MULTIPLIER.set_value(inputs['PRICE_MULTIPLIER'])
+    # instance.GRID_RAMP_RATE.set_value(inputs['GRID_RAMP_RATE'])
     instance.C_WELL.set_value(inputs['C_WELL'])
     instance.C_MACHINE.set_value(inputs['C_MACHINE'])
 
@@ -30,15 +30,17 @@ def parameterSweep(model, inputs):
     print results.solver.termination_condition
 
     # access and print results
-    PROFIT = value(instance.PROFIT)
+    LCOE = value(instance.LCOE)
     N_WELLS = value(instance.N_WELLS)
     X_OCAES = value(instance.X_OCAES)
-    print("PROFIT [M$] : " + str(PROFIT / 1E6))
+    X_WIND = value(instance.X_WIND)
+    print("LCOE [M$] : " + str(LCOE / 1E6))
     print("N_WELLS [-] : " + str(N_WELLS))
     print("X_OCAES [MW]: " + str(X_OCAES))
+    print("X_WIND [MW]: " + str(X_WIND))
 
-    results = pd.Series([PROFIT, N_WELLS, X_OCAES],
-              index=['PROFIT', 'N_WELLS', 'X_OCAES'])
+    results = pd.Series([LCOE, N_WELLS, X_OCAES, X_WIND],
+              index=['LCOE', 'N_WELLS', 'X_OCAES', 'X_WIND'])
 
     output = pd.concat([inputs,results])
 
@@ -49,7 +51,7 @@ if __name__ == '__main__':
     # inputs
     mulitpliers = [1]
     ramp_rates = [1000]
-    well_cost = [1E6, 5E6, 10E6, 15E6]
+    well_cost = [15E6] #[1E6, 5E6, 10E6, 15E6]
     machine_cost = [953000]
 
     # prepare inputs
@@ -76,7 +78,7 @@ if __name__ == '__main__':
     # inputs, results = parameterSweep(model, inputs.loc[0,:])
 
     # Perform Simulations (Run all plant variations in parallel)
-    with parallel_backend('multiprocessing', n_jobs=-1): # -1 uses all processors
+    with parallel_backend('multiprocessing', n_jobs=1): # -1 uses all processors
         output = Parallel(verbose=10)(
             delayed(parameterSweep)(model, inputs.loc[index,:]) for index in
             range(n_cases))

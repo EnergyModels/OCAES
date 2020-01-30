@@ -27,6 +27,7 @@ heat_rates = {'Coal': 10015, 'Gas': 11138, 'Hydro': 0.0, 'Multiple Fuels': 13352
 os.chdir(".//raw_data//PJM")
 df_price = pd.read_csv('2019_rt_hrl_lmps.csv')  # $/MWh
 df_gen = pd.read_csv('2019_gen_by_fuel.csv')
+df_emi = pd.read_csv('2019_gen_by_fuel.csv')
 os.chdir(wrkdir)
 
 # ----------------------------------------
@@ -46,7 +47,7 @@ df_price.plot()
 plt.savefig('COE.png')
 
 # ----------------------------------------
-# Generation type -> emissions
+# Total generation
 # ----------------------------------------
 
 # convert to datetime and set as index
@@ -54,26 +55,52 @@ df_gen.datetime_beginning_ept = pd.to_datetime(df_gen.datetime_beginning_ept)
 df_gen = df_gen.set_index('datetime_beginning_ept')
 
 # drop columns that we don't need
-df_gen = df_gen.drop(columns=['datetime_beginning_utc', 'is_renewable', 'mw'])
+df_gen = df_gen.drop(columns=['datetime_beginning_utc', 'is_renewable', 'fuel_type', 'fuel_percentage_of_total'])
+
+# resample to an hourly basis, sum values (total generation)
+df_gen = df_gen.resample('H').sum()
+
+# Get rid of any zero values, and replace with previous non-zero
+df_gen.mw = df_gen['mw'].replace(to_replace=0, method='ffill')
+
+# Scale by new maximum
+new_max = 500 # MW
+df_gen.mw = df_gen.mw / df_gen.mw.max() * new_max
+
+# save and plot
+df_gen.to_csv('generation.csv')
+df_gen.plot()
+plt.savefig('generation.png')
+
+# ----------------------------------------
+# Generation type -> emissions
+# ----------------------------------------
+
+# convert to datetime and set as index
+df_emi.datetime_beginning_ept = pd.to_datetime(df_emi.datetime_beginning_ept)
+df_emi = df_emi.set_index('datetime_beginning_ept')
+
+# drop columns that we don't need
+df_emi = df_emi.drop(columns=['datetime_beginning_utc', 'is_renewable', 'mw'])
 
 # create column to store emissions
-df_gen['emissions'] = 0.0
+df_emi['emissions'] = 0.0
 
 # calculate emissions (kg CO2/ kWh) per fuel
 for fuel_type in emission_factors.keys():
-    ind = df_gen['fuel_type'] == fuel_type
-    df_gen.loc[ind, 'emissions'] = df_gen.loc[ind, 'fuel_percentage_of_total'] * heat_rates[fuel_type] * \
+    ind = df_emi['fuel_type'] == fuel_type
+    df_emi.loc[ind, 'emissions'] = df_emi.loc[ind, 'fuel_percentage_of_total'] * heat_rates[fuel_type] * \
                                    emission_factors[fuel_type] / 1E6
 
 # resample to an hourly basis, sum values (total emissions)
-df_gen = df_gen.resample('H').sum()
+df_emi = df_emi.resample('H').sum()
 
 # drop columns that we don't need
-df_gen = df_gen.drop(columns=['fuel_percentage_of_total'])
+df_emi = df_emi.drop(columns=['fuel_percentage_of_total'])
 
 # save and plot
-df_gen.to_csv('emissions.csv')
-df_gen.plot()
+df_emi.to_csv('emissions.csv')
+df_emi.plot()
 plt.savefig('emissions.png')
 
 # ----------------------------------------
