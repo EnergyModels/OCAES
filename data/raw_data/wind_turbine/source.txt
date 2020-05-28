@@ -1,6 +1,0 @@
-5MW Power curve from:
-Jonkman, J., Butterfield, S., Musial, W., and Scott, G., "Definition of a 5-MW Reference Wind Turbine for Offshore System Development." NREL/TP-500-38060, February 2009. https://www.nrel.gov/docs/fy09osti/38060.pdf
-
-Data extraction tool:
-https://apps.automeris.io/wpd/
-
