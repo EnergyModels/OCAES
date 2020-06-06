@@ -77,6 +77,8 @@ class ocaes:
         data.loc[data.windspeed_ms >= inputs['wt_rated'], 'P_wind_MW'] = 1.0  # Rated
         data.loc[data.windspeed_ms >= inputs['wt_cutout'], 'P_wind_MW'] = 0.0  # cut-out
 
+        data.loc[:, 'P_wind_MW']  = data.loc[:, 'P_wind_MW']  * inputs['X_wind']
+
         # ================================
         # Process data
         # Move time series data to dictionaries to be compatible with pyomo indexed format
@@ -217,11 +219,38 @@ class ocaes:
 
     def get_full_results(self):
 
-        # add the following to your python script
-        DF = pd.DataFrame()
-        for v in self.model.component_objects(Var, active=True):
-            for index in v:
-                DF.at[index, v.name] = value(v[index])
+        s = pd.Series()
+        df = pd.DataFrame()
+
+
+        # Variable values
+        for v in self.instance.component_objects(Var, active=True):
+            value_dict = v.extract_values()
+            if len(value_dict) == 1:  # single value
+                s[v.name] = value_dict[None]
+                # if single value, put in series
+            else:
+                df = pd.concat([df, pd.DataFrame.from_dict(value_dict, orient='index', columns=[v.name])], axis=1,sort=False)
+
+        # Parameter values
+        for v in self.instance.component_objects(Param, active=True):
+            value_dict = v.extract_values()
+            if len(value_dict) == 1:  # single value
+                s[v.name] = value_dict[None]
+                # if single value, put in series
+            else:
+                df = pd.concat([df, pd.DataFrame.from_dict(value_dict, orient='index', columns=[v.name])],
+                               axis=1, sort=False)
+            # if multiple vlaues, then time dependnet, put in dataframe
+        #
+        #     print(v.extract_values())
+        #
+        # # add the following to your python script
+        # DF = pd.DataFrame()
+        # for v in self.model.component_objects(Var, active=True):
+        #     print(v)
+            # for index in v:
+            #     DF.at[index, v.name] = value(v[index])
 
         # cols = ['P_wind','P_cmp','P_exp','P_curtail','P_grid']
         # df = pd.DataFrame(columns=cols)
@@ -231,5 +260,7 @@ class ocaes:
         # df.P_curtail = value(self.instance.P_curtail)
         # df.P_grid = value(self.instance.P_grid)
 
-        return DF
+        return df, s
 
+
+def plot_results(self):
