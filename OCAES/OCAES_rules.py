@@ -1,12 +1,9 @@
-import pyomo.environ as pyo
-
-
 # ----------------
-# Capacity constraints
+# capacity constraints
 # ----------------
+
 
 # power
-
 def pwr_capacity_cmp(model, t):
     return model.P_cmp[t] <= model.X_cmp
 
@@ -33,14 +30,14 @@ def energy_capacity_well_max(model, t):
 
 
 # ----------------
-# Power balance
+# power balance
 # ----------------
 def power_balance(model, t):
     return model.P_wind[t] + model.P_exp[t] == model.P_curtail[t] + model.P_grid[t] + model.P_cmp[t]
 
 
 # ----------------
-# Energy stored
+# energy stored
 # ----------------
 def energy_stored(model, t):
     if t == 1:
@@ -56,36 +53,49 @@ def energy_stored_final(model):
 
 
 # ----------------
-# Avoided emissions
+# avoided emissions
 # ----------------
 def emissions(model):
     return model.avoided_emissions == sum(model.P_grid[t] * model.delta_t * model.emissions_grid[t] for t in model.t)
 
 
 # ----------------
-# Economics
+# economics
 # ----------------
-def revenue(model):
-    return model.revenue == sum(model.P_grid[t] * model.delta_t * model.price_grid[t] for t in model.t)
+def revenue(model, t):
+    return model.revenue[t] == model.P_grid[t] * model.delta_t * model.price_grid[t]
+
+
+def total_revenue(model):
+    return model.total_revenue == sum(model.P_grid[t] * model.delta_t * model.price_grid[t] for t in model.t)
 
 
 def costs(model):
-    capital = model.CCR * (
-            model.X_wind * model.C_wind + model.X_well * model.C_well + model.X_cmp * model.C_cmp + model.X_exp * model.C_exp)
-    fixed = model.X_wind * model.F_wind + model.X_well * model.F_well + model.X_cmp * model.F_cmp + model.X_exp * model.F_exp
+    # capital costs = capacity * annual costs
+    capital = model.X_wind * model.AC_wind + model.X_well * model.AC_well + model.X_cmp * model.AC_cmp + model.X_exp * model.AC_exp
+
+    # fixed costs
+    fixed = model.X_wind * model.F_wind + model.X_well * model.F_well + \
+            model.X_cmp * model.F_cmp + model.X_exp * model.F_exp
+
+    # variable costs
     variable = model.V_wind * model.delta_t * sum(model.P_wind[t] for t in model.t) + \
                model.V_cmp * model.delta_t * sum(model.P_cmp[t] for t in model.t) + \
                model.V_exp * model.delta_t * sum(model.P_exp[t] for t in model.t)
+
     return model.costs == capital + fixed + variable
 
 
 def profit(model):
-    return model.profit == model.revenue - model.costs
+    return model.profit == model.total_revenue - model.costs
+
+def LCOE(model):
+    return model.LCOE == sum(model.P_grid[t] for t in model.t) / model.costs
 
 
 # ----------------
-# Economics
+# objective
 # ----------------
-def objective(model):  # Objective - maximize profit
-    return model.revenue
+def objective(model):  # Objective - maximize total revenue
+    return model.total_revenue
     # return model.costs / sum(model.E_grid[t] * model.delta_t for t in model.t) # LCOE

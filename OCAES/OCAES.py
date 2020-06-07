@@ -1,6 +1,9 @@
 import pandas as pd
 from pyomo.environ import *
+import matplotlib.pyplot as plt
+import seaborn as sns
 from OCAES import OCAES_rules as rules
+import numpy_financial as npf
 
 
 class ocaes:
@@ -30,21 +33,30 @@ class ocaes:
         inputs['initial_storage_fr'] = 0.5  # initial storage level, fraction of max [-]
 
         # Capital costs [$/MW]
-        inputs['C_wind'] = 298.15
-        inputs['C_well'] = 298.15
-        inputs['C_cmp'] = 298.15
-        inputs['C_exp'] = 298.15
+        inputs['C_wind'] = 4444.0 * 1000.0
+        inputs['C_well'] = 1E6 / 5.0  # Initial guess
+        inputs['C_cmp'] = 0.0
+        inputs['C_exp'] = 1000.0 * 1000.0
 
         # Variable costs [$/MWh]
         inputs['V_wind'] = 10.0e3
         inputs['V_cmp'] = 0.0
-        inputs['V_exp'] = 0.0
+        inputs['V_exp'] = 0.0046 * 1000.0
 
         # Fixed costs [$/MW-y]
-        inputs['F_wind'] = 10.0e3
+        inputs['F_wind'] = 129.0 * 1000.0
         inputs['F_well'] = 0.0
         inputs['F_cmp'] = 0.0
-        inputs['F_exp'] = 0.0
+        inputs['F_exp'] = 15.32 * 1000.0
+
+        # Interest rate
+        inputs['i'] = 0.05  # initial estimate
+
+        # Loan lifetime [y]
+        inputs['L_wind'] = 25.0
+        inputs['L_well'] = 30.0
+        inputs['L_cmp'] = 30.0
+        inputs['L_exp'] = 30.0
 
         # wind farm performance characteristics
         inputs['wt_cutin'] = 3.16  # Cut-in wind speed [m/s]
@@ -77,7 +89,7 @@ class ocaes:
         data.loc[data.windspeed_ms >= inputs['wt_rated'], 'P_wind_MW'] = 1.0  # Rated
         data.loc[data.windspeed_ms >= inputs['wt_cutout'], 'P_wind_MW'] = 0.0  # cut-out
 
-        data.loc[:, 'P_wind_MW']  = data.loc[:, 'P_wind_MW']  * inputs['X_wind']
+        data.loc[:, 'P_wind_MW'] = data.loc[:, 'P_wind_MW'] * inputs['X_wind']
 
         # ================================
         # Process data
@@ -141,8 +153,20 @@ class ocaes:
         model.F_cmp = Param(initialize=inputs['F_cmp'])
         model.F_exp = Param(initialize=inputs['F_exp'])
 
-        # interest rate calculation factor
-        model.CCR = Param(initialize=0.1)  # TODO
+        # Interest rate [fr]
+        model.i = Param(initialize=inputs['i'])
+
+        # Loan lifetime [y]
+        model.L_wind = Param(initialize=inputs['L_wind'])
+        model.L_well = Param(initialize=inputs['L_well'])
+        model.L_cmp = Param(initialize=inputs['L_cmp'])
+        model.L_exp = Param(initialize=inputs['L_exp'])
+
+        # Annual capital costs - calculated with npf function pmt
+        model.AC_wind = Param(initialize=npf.pmt(inputs['i'], inputs['L_wind'], inputs['C_wind']))
+        model.AC_well = Param(initialize=npf.pmt(inputs['i'], inputs['L_well'], inputs['C_well']))
+        model.AC_cmp = Param(initialize=npf.pmt(inputs['i'], inputs['L_cmp'], inputs['C_cmp']))
+        model.AC_exp = Param(initialize=npf.pmt(inputs['i'], inputs['L_exp'], inputs['C_exp']))
 
         # ----------------
         # Variables (upper case)
@@ -157,9 +181,11 @@ class ocaes:
         model.E_well = Var(model.t, within=NonNegativeReals, initialize=0.0)  # OCAES compressor power in (>0, MW)
 
         # Economics
-        model.revenue = Var(within=Reals, initialize=0.0)
+        model.revenue = Var(model.t, within=Reals, initialize=0.0)
+        model.total_revenue = Var(within=Reals, initialize=0.0)
         model.costs = Var(within=Reals, initialize=0.0)
         model.profit = Var(within=Reals, initialize=0.0)
+        model.LCOE = Var(within=Reals, initialize=0.0)
 
         # Avoided emissions
         model.avoided_emissions = Var(within=Reals, initialize=0.0)  # within reservoir (>0, $)
@@ -188,9 +214,11 @@ class ocaes:
         model.cnst_emissions = Constraint(rule=rules.emissions)
 
         # economics
-        model.cnst_revenue = Constraint(rule=rules.revenue)
-        model.cnst_costs_cnst = Constraint(rule=rules.costs)
-        model.cnst_profit_cnst = Constraint(rule=rules.profit)
+        model.cnst_revenue = Constraint(model.t, rule=rules.revenue)
+        model.cnst_total_revenue = Constraint(rule=rules.total_revenue)
+        model.cnst_costs = Constraint(rule=rules.costs)
+        model.cnst_profit = Constraint(rule=rules.profit)
+        model.cnst_LCOE = Constraint(rule=rules.LCOE)
 
         # ----------------
         # Objective
@@ -202,7 +230,10 @@ class ocaes:
         # ----------------
 
         # create instance
-        instance = model.create_instance(report_timing=True)
+        if inputs['debug']:
+            instance = model.create_instance(report_timing=True)
+        else:
+            instance = model.create_instance(report_timing=False)
         instance.preprocess()
 
         # solve
@@ -222,7 +253,6 @@ class ocaes:
         s = pd.Series()
         df = pd.DataFrame()
 
-
         # Variable values
         for v in self.instance.component_objects(Var, active=True):
             value_dict = v.extract_values()
@@ -230,7 +260,8 @@ class ocaes:
                 s[v.name] = value_dict[None]
                 # if single value, put in series
             else:
-                df = pd.concat([df, pd.DataFrame.from_dict(value_dict, orient='index', columns=[v.name])], axis=1,sort=False)
+                df = pd.concat([df, pd.DataFrame.from_dict(value_dict, orient='index', columns=[v.name])], axis=1,
+                               sort=False)
 
         # Parameter values
         for v in self.instance.component_objects(Param, active=True):
@@ -241,26 +272,159 @@ class ocaes:
             else:
                 df = pd.concat([df, pd.DataFrame.from_dict(value_dict, orient='index', columns=[v.name])],
                                axis=1, sort=False)
-            # if multiple vlaues, then time dependnet, put in dataframe
-        #
-        #     print(v.extract_values())
-        #
-        # # add the following to your python script
-        # DF = pd.DataFrame()
-        # for v in self.model.component_objects(Var, active=True):
-        #     print(v)
-            # for index in v:
-            #     DF.at[index, v.name] = value(v[index])
-
-        # cols = ['P_wind','P_cmp','P_exp','P_curtail','P_grid']
-        # df = pd.DataFrame(columns=cols)
-        # df.P_wind = value(self.instance.P_wind)
-        # df.P_cmp = value(self.instance.P_cmp)
-        # df.P_exp = value(self.instance.P_exp)
-        # df.P_curtail = value(self.instance.P_curtail)
-        # df.P_grid = value(self.instance.P_grid)
-
         return df, s
 
+    def plot_overview(self, start=1, stop=168, dpi=300, savename='results_overview'):
+        # get results
+        df, s = self.get_full_results()
 
-def plot_results(self):
+        # ----------------------
+        # check and process inputs
+        # ----------------------
+        if start < 1:
+            start = 1
+        if stop > len(df):
+            stop = len(df)
+        savename = savename + '.png'
+
+        n_plots = 4
+
+        # Column width guidelines
+        # https://www.elsevier.com/authors/author-schemas/artwork-and-media-instructions/artwork-sizing
+        # Single column: 90mm = 3.54 in
+        # 1.5 column: 140 mm = 5.51 in
+        # 2 column: 190 mm = 7.48 i
+        width = 7.48  # inches
+        height = 5.5  # inches
+
+        # create subplots
+        f, axes = plt.subplots(n_plots, 1, sharex='col')  # ,constrained_layout=True)
+
+        # style
+        sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatino", "serif"]})
+        sns.set_context("paper")
+        sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
+        colors = sns.color_palette("Paired")
+
+        # x variable
+        x_convert = 1.0
+        x_label = 'Timestep [-]'
+
+        for i, ax in enumerate(axes):
+            if i == 0:
+                y_vars = ['P_cmp', 'P_exp', 'P_curtail', 'P_grid', 'P_wind']
+                y_var_names = ['Compressor', 'Expander', 'Curtail', 'Grid', 'Wind']
+                y_colors = [colors[0], colors[1], colors[2], colors[3], colors[4]]
+                y_convert = 1.0
+                y_label = 'Power [MW]'
+
+            elif i == 1:
+                y_vars = ['E_well']
+                y_var_names = ['Energy stored']
+                y_colors = [colors[0]]
+                y_convert = 1.0
+                y_label = 'Energy [MWh]'
+
+            elif i == 2:  # if i == 2:
+                y_vars = ['price_grid']
+                y_var_names = ['Electricity price']
+                y_colors = [colors[0]]
+                y_convert = 1.0
+                y_label = 'Price [$/MWh]'
+
+            else:  # if i == 3:
+                y_vars = ['revenue']
+                y_var_names = ['Revenue']
+                y_colors = [colors[0]]
+                y_convert = 1.0
+                y_label = 'Revenue [$]'
+
+            for y_var, y_color, y_var_name in zip(y_vars, y_colors, y_var_names):
+                data = df.loc[start:stop, y_var]
+                x = data.index * x_convert
+                y = data.values * y_convert
+                ax.plot(x, y, color=y_color, label=y_var_name)
+
+            # add legend
+            ax.legend()
+
+            # Despine and remove ticks
+            sns.despine(ax=ax, )
+            ax.tick_params(top=False, right=False)
+
+            # Labels
+            if i == n_plots - 1:
+                ax.set_xlabel(x_label)
+            ax.set_ylabel(y_label)
+
+        # Set size
+        f = plt.gcf()
+        f.set_size_inches(width, height)
+
+        # save and close plot
+        plt.savefig(savename, dpi=dpi)
+        plt.close()
+
+    def plot_power_energy(self, start=1, stop=168, dpi=300, savename='results_power_energy'):
+        # get results
+        df, s = self.get_full_results()
+
+        # ----------------------
+        # check and process inputs
+        # ----------------------
+        if start < 1:
+            start = 1
+        if stop > len(df):
+            stop = len(df)
+        savename = savename + '.png'
+
+        # Column width guidelines
+        # https://www.elsevier.com/authors/author-schemas/artwork-and-media-instructions/artwork-sizing
+        # Single column: 90mm = 3.54 in
+        # 1.5 column: 140 mm = 5.51 in
+        # 2 column: 190 mm = 7.48 i
+        width = 7.48  # inches
+        height = 5.5  # inches
+
+        # create subplots
+        f, axes = plt.subplots(3, 2, sharex='all')
+        a = axes.ravel()
+
+        # style
+        sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatino", "serif"]})
+        sns.set_context("paper")
+        sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
+        colors = sns.color_palette("Paired")
+
+        # x variable
+        x_convert = 1.0
+        x_label = 'Timestep [-]'
+
+        # y variables
+        y_vars = ['P_wind', 'P_cmp', 'P_grid', 'P_exp', 'P_curtail', 'E_well']
+        y_colors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[5]]
+        y_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        y_labels = ['Wind power [MW]', 'Compressor [MW]', 'Delivered to grid [MW]', 'Expander [MW]',
+                    'Curtailment [MW]', 'Energy stored [MWh]']
+
+        for i, (ax, y_var, y_color, y_convert, y_label) in enumerate(zip(a, y_vars, y_colors, y_converts, y_labels)):
+            data = df.loc[start:stop, y_var]
+            x = data.index * x_convert
+            y = data.values * y_convert
+            ax.plot(x, y, color=y_color)
+
+            # Labels
+            ax.set_xlabel(x_label)
+            ax.set_ylabel(y_label)
+
+            # Despine and remove ticks
+            sns.despine(ax=ax, )
+            ax.tick_params(top=False, right=False)
+
+        # Set size
+        f = plt.gcf()
+        f.set_size_inches(width, height)
+
+        # save and close plot
+        plt.savefig(savename, dpi=dpi)
+        plt.close()
