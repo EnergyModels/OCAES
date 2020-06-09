@@ -9,6 +9,8 @@ inputs = ocaes.get_default_inputs()
 model = ocaes(data, inputs)
 df, s = model.get_full_results()
 
+df.to_csv('results.csv')
+
 # ----------------------
 # create plots using built-in functions
 # ----------------------

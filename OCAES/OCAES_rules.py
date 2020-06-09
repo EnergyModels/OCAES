@@ -20,6 +20,10 @@ def pwr_capacity_well_out(model, t):
     return model.P_exp[t] <= model.X_well
 
 
+def pwr_grid(model, t):
+    return model.P_grid[t] <= model.X_wind
+
+
 # energy
 def energy_capacity_well_min(model, t):
     return 0.0 <= model.E_well[t]
@@ -45,7 +49,7 @@ def energy_stored(model, t):
     else:
         return model.E_well[t] == model.E_well[t - 1] + \
                model.eta_storage_single * model.P_cmp[t] * model.delta_t - \
-               model.eta_storage_single * model.P_exp[t] ** model.delta_t
+               model.eta_storage_single * model.P_exp[t] * model.delta_t
 
 
 def energy_stored_final(model):
@@ -56,7 +60,18 @@ def energy_stored_final(model):
 # avoided emissions
 # ----------------
 def emissions(model):
-    return model.avoided_emissions == sum(model.P_grid[t] * model.delta_t * model.emissions_grid[t] for t in model.t)
+    return model.avoided_emissions == model.delta_t * sum(model.P_grid[t] * model.emissions_grid[t] for t in model.t)
+
+
+# ----------------
+# electricity delivered to the grid
+# ----------------
+def total_electricity(model):
+    return model.total_electricity == sum(model.P_grid[t] for t in model.t)
+
+
+def yearly_electricity(model):
+    return model.yearly_electricity == sum(model.P_grid[t] for t in model.t) * 8760 / (model.T * model.delta_t)
 
 
 # ----------------
@@ -67,10 +82,15 @@ def revenue(model, t):
 
 
 def total_revenue(model):
-    return model.total_revenue == sum(model.P_grid[t] * model.delta_t * model.price_grid[t] for t in model.t)
+    return model.total_revenue == model.delta_t * sum(model.P_grid[t] * model.price_grid[t] for t in model.t)
 
 
-def costs(model):
+def yearly_revenue(model):
+    return model.yearly_revenue == model.delta_t * sum(model.P_grid[t] * model.price_grid[t] for t in model.t) * 8760 / (
+            model.T * model.delta_t)
+
+
+def yearly_costs(model):
     # capital costs = capacity * annual costs
     capital = model.X_wind * model.AC_wind + model.X_well * model.AC_well + model.X_cmp * model.AC_cmp + model.X_exp * model.AC_exp
 
@@ -82,15 +102,13 @@ def costs(model):
     variable = model.V_wind * model.delta_t * sum(model.P_wind[t] for t in model.t) + \
                model.V_cmp * model.delta_t * sum(model.P_cmp[t] for t in model.t) + \
                model.V_exp * model.delta_t * sum(model.P_exp[t] for t in model.t)
+    variable = variable * 8760 / (model.T * model.delta_t)  # scale to one year
 
-    return model.costs == capital + fixed + variable
+    return model.yearly_costs == capital + fixed + variable
 
 
-def profit(model):
-    return model.profit == model.total_revenue - model.costs
-
-def LCOE(model):
-    return model.LCOE == sum(model.P_grid[t] for t in model.t) / model.costs
+def yearly_profit(model):
+    return model.yearly_profit == model.yearly_revenue - model.yearly_costs
 
 
 # ----------------

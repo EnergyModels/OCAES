@@ -180,24 +180,29 @@ class ocaes:
         # Energy stored
         model.E_well = Var(model.t, within=NonNegativeReals, initialize=0.0)  # OCAES compressor power in (>0, MW)
 
+        # Avoided emissions
+        model.avoided_emissions = Var(within=Reals, initialize=0.0)  # within reservoir (>0, $)
+
+        # electricity (delivered to the grid)
+        model.total_electricity = Var(within=Reals, initialize=0.0)  # total
+        model.yearly_electricity = Var(within=Reals, initialize=0.0)  # scaled for one year
+
         # Economics
         model.revenue = Var(model.t, within=Reals, initialize=0.0)
         model.total_revenue = Var(within=Reals, initialize=0.0)
-        model.costs = Var(within=Reals, initialize=0.0)
-        model.profit = Var(within=Reals, initialize=0.0)
-        model.LCOE = Var(within=Reals, initialize=0.0)
-
-        # Avoided emissions
-        model.avoided_emissions = Var(within=Reals, initialize=0.0)  # within reservoir (>0, $)
+        model.yearly_revenue = Var(within=Reals, initialize=0.0)
+        model.yearly_costs = Var(within=Reals, initialize=0.0)
+        model.yearly_profit = Var(within=Reals, initialize=0.0)
 
         # ----------------
         # Constraints (prefixed with cnst)
         # ----------------
         # capacity - power
         model.cnst_pwr_capacity_cmp = Constraint(model.t, rule=rules.pwr_capacity_cmp)
-        model.cnst_pwr_capacity_exp = Constraint(model.t, rule=rules.pwr_capacity_cmp)
+        model.cnst_pwr_capacity_exp = Constraint(model.t, rule=rules.pwr_capacity_exp)
         model.cnst_pwr_capacity_well_in = Constraint(model.t, rule=rules.pwr_capacity_well_in)
         model.cnst_pwr_capacity_well_out = Constraint(model.t, rule=rules.pwr_capacity_well_out)
+        model.cnst_pwr_grid = Constraint(model.t, rule=rules.pwr_grid)
 
         # capacity - energy
         model.cnst_energy_capacity_well_min = Constraint(model.t, rule=rules.energy_capacity_well_min)
@@ -213,12 +218,16 @@ class ocaes:
         # emissions
         model.cnst_emissions = Constraint(rule=rules.emissions)
 
+        # electricity
+        model.cnst_total_electricity = Constraint(rule=rules.total_electricity)
+        model.cnst_yearly_electricity = Constraint(rule=rules.yearly_electricity)
+
         # economics
         model.cnst_revenue = Constraint(model.t, rule=rules.revenue)
         model.cnst_total_revenue = Constraint(rule=rules.total_revenue)
-        model.cnst_costs = Constraint(rule=rules.costs)
-        model.cnst_profit = Constraint(rule=rules.profit)
-        model.cnst_LCOE = Constraint(rule=rules.LCOE)
+        model.cnst_yearly_revenue = Constraint(rule=rules.yearly_revenue)
+        model.cnst_yearly_costs = Constraint(rule=rules.yearly_costs)
+        model.cnst_yearly_profit = Constraint(rule=rules.yearly_profit)
 
         # ----------------
         # Objective
@@ -273,6 +282,12 @@ class ocaes:
                 df = pd.concat([df, pd.DataFrame.from_dict(value_dict, orient='index', columns=[v.name])],
                                axis=1, sort=False)
         return df, s
+
+    def calculate_LCOE(self):
+        df, s = self.get_full_results()
+        LCOE = s['yearly_costs'] / s['yearly_electricity']
+        s['LCOE'] = LCOE
+        return s, LCOE
 
     def plot_overview(self, start=1, stop=168, dpi=300, savename='results_overview'):
         # get results
