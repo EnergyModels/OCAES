@@ -20,6 +20,7 @@ def parameterSweep(sweep_inputs, index):
     model_inputs['X_exp'] = sweep_inputs.loc[index, 'capacity']
     model = ocaes(data, model_inputs)
     df, s = model.get_full_results()
+    s = model.calculate_LCOE(s)
 
     # Display Elapsed Time
     t1 = time.time()

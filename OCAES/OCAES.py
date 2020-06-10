@@ -39,9 +39,9 @@ class ocaes:
         inputs['C_exp'] = 1000.0 * 1000.0
 
         # Variable costs [$/MWh]
-        inputs['V_wind'] = 10.0e3
+        inputs['V_wind'] = 0.0
         inputs['V_cmp'] = 0.0
-        inputs['V_exp'] = 0.0046 * 1000.0
+        inputs['V_exp'] = 0.0046 * 1000.0#TODO
 
         # Fixed costs [$/MW-y]
         inputs['F_wind'] = 129.0 * 1000.0
@@ -162,11 +162,11 @@ class ocaes:
         model.L_cmp = Param(initialize=inputs['L_cmp'])
         model.L_exp = Param(initialize=inputs['L_exp'])
 
-        # Annual capital costs - calculated with npf function pmt
-        model.AC_wind = Param(initialize=npf.pmt(inputs['i'], inputs['L_wind'], inputs['C_wind']))
-        model.AC_well = Param(initialize=npf.pmt(inputs['i'], inputs['L_well'], inputs['C_well']))
-        model.AC_cmp = Param(initialize=npf.pmt(inputs['i'], inputs['L_cmp'], inputs['C_cmp']))
-        model.AC_exp = Param(initialize=npf.pmt(inputs['i'], inputs['L_exp'], inputs['C_exp']))
+        # Annual capital costs - calculated with npf function pmt [$/MW]
+        model.AC_wind = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_wind'], inputs['C_wind']))
+        model.AC_well = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_well'], inputs['C_well']))
+        model.AC_cmp = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_cmp'], inputs['C_cmp']))
+        model.AC_exp = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_exp'], inputs['C_exp']))
 
         # ----------------
         # Variables (upper case)
@@ -283,11 +283,8 @@ class ocaes:
                                axis=1, sort=False)
         return df, s
 
-    def calculate_LCOE(self):
-        df, s = self.get_full_results()
-        LCOE = s['yearly_costs'] / s['yearly_electricity']
-        s['LCOE'] = LCOE
-        return s, LCOE
+    def calculate_LCOE(self, s):
+        return s['yearly_costs'] / s['yearly_electricity']
 
     def plot_overview(self, start=1, stop=168, dpi=300, savename='results_overview'):
         # get results
