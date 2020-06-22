@@ -7,7 +7,7 @@ import numpy_financial as npf
 
 
 class ocaes:
-    def get_default_inputs():
+    def get_default_inputs(storage_type='OCAES'):
         attributes = ['debug', 'delta_t',
                       'X_wind', 'X_well', 'X_cmp', 'X_exp',
                       'pwr2energy', 'eta_storage',
@@ -69,6 +69,34 @@ class ocaes:
         inputs['wt_B'] = 0.006094302  # B
         inputs['wt_C'] = -0.0337523  # C
         inputs['wt_D'] = 0.05317015  # D
+
+        if storage_type == 'battery':
+            # place all costs on expander
+            inputs['C_exp'] = 1876.0 * 1000.0  # $/MW
+            inputs['F_exp'] = 10.0 * 1000.0
+            inputs['V_exp'] = 0.03 / 100.0 * 1000.0
+
+            # remove all costs from compressor and well
+            inputs['C_cmp'] = 0.0
+            inputs['F_cmp'] = 0.0
+            inputs['V_cmp'] = 0.0
+            inputs['C_well'] = 0.0
+            inputs['F_well'] = 0.0
+            inputs['V_well'] = 0.0
+
+            # battery lifetime
+            inputs['L_well'] = 15.0
+            inputs['L_exp'] = 15.0
+            inputs['L_cmp'] = 15.0
+
+            # Storage performance
+            inputs['pwr2energy'] = 2.0  # relation between power and energy [-]
+            inputs['eta_storage'] = 0.90  # round trip efficiency [-]
+
+        if storage_type == 'wind_only':
+            inputs['X_well'] = 0
+            inputs['X_cmp'] = 0
+            inputs['X_exp'] = 0
 
         return inputs
 
@@ -163,10 +191,10 @@ class ocaes:
         model.L_exp = Param(initialize=inputs['L_exp'])
 
         # Annual capital costs - calculated with npf function pmt [$/MW]
-        model.AC_wind = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_wind'], inputs['C_wind']))
-        model.AC_well = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_well'], inputs['C_well']))
-        model.AC_cmp = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_cmp'], inputs['C_cmp']))
-        model.AC_exp = Param(initialize=-1.0*npf.pmt(inputs['i'], inputs['L_exp'], inputs['C_exp']))
+        model.AC_wind = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_wind'], inputs['C_wind']))
+        model.AC_well = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_well'], inputs['C_well']))
+        model.AC_cmp = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_cmp'], inputs['C_cmp']))
+        model.AC_exp = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_exp'], inputs['C_exp']))
 
         # ----------------
         # Variables (upper case)
@@ -326,8 +354,8 @@ class ocaes:
 
         for i, ax in enumerate(axes):
             if i == 0:
-                y_vars = ['P_cmp', 'P_exp', 'P_curtail', 'P_grid', 'P_wind']
-                y_var_names = ['Compressor', 'Expander', 'Curtail', 'Grid', 'Wind']
+                y_vars = ['P_cmp', 'P_exp', 'P_curtail', 'P_grid_sell', 'P_grid_buy', 'P_wind']
+                y_var_names = ['Compressor', 'Expander', 'Curtail', 'Grid - Sell', 'Grid - Buy', 'Wind']
                 y_colors = [colors[0], colors[1], colors[2], colors[3], colors[4]]
                 y_convert = 1.0
                 y_label = 'Power [MW]'
@@ -415,11 +443,11 @@ class ocaes:
         x_label = 'Timestep [-]'
 
         # y variables
-        y_vars = ['P_wind', 'P_cmp', 'P_grid', 'P_exp', 'P_curtail', 'E_well']
-        y_colors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[5]]
-        y_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-        y_labels = ['Wind power [MW]', 'Compressor [MW]', 'Delivered to grid [MW]', 'Expander [MW]',
-                    'Curtailment [MW]', 'Energy stored [MWh]']
+        y_vars = ['P_wind', 'P_cmp', 'P_grid_sell', 'P_grid_buy', 'P_exp', 'P_curtail', 'E_well']
+        y_colors = [colors[0], colors[1], colors[2], colors[3], colors[4], colors[5], colors[6]]
+        y_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        y_labels = ['Wind power [MW]', 'Compressor [MW]', 'Delivered to grid [MW]', 'Purchased from grid [MW]',
+                    'Expander [MW]', 'Curtailment [MW]', 'Energy stored [MWh]']
 
         for i, (ax, y_var, y_color, y_convert, y_label) in enumerate(zip(a, y_vars, y_colors, y_converts, y_labels)):
             data = df.loc[start:stop, y_var]

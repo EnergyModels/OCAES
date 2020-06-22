@@ -57,11 +57,11 @@ inputs['pwr2energy'] = 2.0  # relation between power and energy [-]
 inputs['eta_storage'] = 0.90  # round trip efficiency [-]
 model = ocaes(data, inputs)
 df, s_batt = model.get_full_results()
-s_batt = model.calculate_LCOE(s_batt)
+s_batt2 = model.calculate_LCOE(s_batt)
 
 # ----------------------
 # print results
 # ----------------------
-print(s_wind['LCOE'])
-print(s_ocaes['LCOE'])
-print(s_batt['LCOE'])
+# print(s_wind['LCOE'])
+# print(s_ocaes['LCOE'])
+# print(s_batt['LCOE'])
