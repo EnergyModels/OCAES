@@ -34,29 +34,29 @@ class ocaes:
 
         # Capital costs [$/MW]
         inputs['C_wind'] = 4444.0 * 1000.0
-        inputs['C_well'] = 1E6 / 5.0  # Initial guess
+        inputs['C_well'] = 144.986 * 1000.0
         inputs['C_cmp'] = 0.0
-        inputs['C_exp'] = 1000.0 * 1000.0
+        inputs['C_exp'] = 930.438 * 1000.0
 
         # Variable costs [$/MWh]
         inputs['V_wind'] = 0.0
         inputs['V_cmp'] = 0.0
-        inputs['V_exp'] = 0.0046 * 1000.0#TODO
+        inputs['V_exp'] = 4.62
 
         # Fixed costs [$/MW-y]
         inputs['F_wind'] = 129.0 * 1000.0
         inputs['F_well'] = 0.0
         inputs['F_cmp'] = 0.0
-        inputs['F_exp'] = 15.32 * 1000.0
+        inputs['F_exp'] = 0.0
 
         # Interest rate
         inputs['i'] = 0.05  # initial estimate
 
         # Loan lifetime [y]
         inputs['L_wind'] = 25.0
-        inputs['L_well'] = 30.0
-        inputs['L_cmp'] = 30.0
-        inputs['L_exp'] = 30.0
+        inputs['L_well'] = 25.0
+        inputs['L_cmp'] = 25.0
+        inputs['L_exp'] = 25.0
 
         # wind farm performance characteristics
         inputs['wt_cutin'] = 3.16  # Cut-in wind speed [m/s]
@@ -175,7 +175,8 @@ class ocaes:
         model.P_cmp = Var(model.t, within=NonNegativeReals, initialize=0.0)  # OCAES compressor power in (>0, MW)
         model.P_exp = Var(model.t, within=NonNegativeReals, initialize=0.0)  # OCAES expander power out (>0, MW)
         model.P_curtail = Var(model.t, within=NonNegativeReals, initialize=0.0)  # Curtailed power (>0, MW)
-        model.P_grid = Var(model.t, within=NonNegativeReals, initialize=0.0)  # Power sold to the grid (>0, MW)
+        model.P_grid_sell = Var(model.t, within=NonNegativeReals, initialize=0.0)  # Power sold to the grid (>0, MW)
+        model.P_grid_buy = Var(model.t, within=NonNegativeReals, initialize=0.0)  # Power bought from the grid (>0, MW)
 
         # Energy stored
         model.E_well = Var(model.t, within=NonNegativeReals, initialize=0.0)  # OCAES compressor power in (>0, MW)
@@ -202,7 +203,8 @@ class ocaes:
         model.cnst_pwr_capacity_exp = Constraint(model.t, rule=rules.pwr_capacity_exp)
         model.cnst_pwr_capacity_well_in = Constraint(model.t, rule=rules.pwr_capacity_well_in)
         model.cnst_pwr_capacity_well_out = Constraint(model.t, rule=rules.pwr_capacity_well_out)
-        model.cnst_pwr_grid = Constraint(model.t, rule=rules.pwr_grid)
+        model.cnst_pwr_grid_sell = Constraint(model.t, rule=rules.pwr_grid_sell)
+        model.cnst_pwr_grid_buy = Constraint(model.t, rule=rules.pwr_grid_buy)
 
         # capacity - energy
         model.cnst_energy_capacity_well_min = Constraint(model.t, rule=rules.energy_capacity_well_min)
