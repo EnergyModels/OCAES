@@ -12,7 +12,7 @@ def parameterSweep(sweep_inputs, index):
     t0 = time.time()
 
     # create and run model
-    data = pd.read_csv('data_manual.csv')
+    data = pd.read_csv('model_inputs.csv')
     model_inputs = ocaes.get_default_inputs(storage_type=sweep_inputs.loc[index, 'storage_type'])
 
     if sweep_inputs.loc[index, 'storage_type'] == 'wind_only':
@@ -24,9 +24,15 @@ def parameterSweep(sweep_inputs, index):
         model_inputs['X_cmp'] = sweep_inputs.loc[index, 'capacity']
         model_inputs['X_exp'] = sweep_inputs.loc[index, 'capacity']
 
+    if sweep_inputs.loc[index, 'storage_type'] == 'OCAES-10':
+        model_inputs['pwr2energy'] = 10
+    if sweep_inputs.loc[index, 'storage_type'] == 'OCAES-24':
+        model_inputs['pwr2energy'] = 24
+
+
     model = ocaes(data, model_inputs)
     df, s = model.get_full_results()
-    s['LCOE'] = model.calculate_LCOE(s)
+    s['revenue'], s['LCOE'], s['COVE'], s['emissions_avoided'] = model.post_process(s)
 
     # Display Elapsed Time
     t1 = time.time()
@@ -47,7 +53,7 @@ if __name__ == '__main__':
     studyname = 'sweep_capacity'
 
     # storage technologies to investigate
-    storage_types = ['OCAES', 'battery', 'wind_only']
+    storage_types = ['OCAES-10', 'OCAES-24', 'battery', 'wind_only']
 
     # storage capacities to investigate
     capacities = [0, 100, 200, 300, 400, 500]

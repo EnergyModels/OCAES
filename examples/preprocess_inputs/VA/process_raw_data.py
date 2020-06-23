@@ -1,13 +1,22 @@
 import os
 import pandas as pd
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
 import numpy as np
+import matplotlib.pyplot as plt
 
+# ----------------------------------------
+# inputs
+# ----------------------------------------
+data_folder = 'raw_data'
+price_file = 'rt_hrl_lmps_DOM_19.csv'
+generation_by_fuel_file = '2019_gen_by_fuel.csv'  # must be the same year as price_file
+wind_speed_file = 'Clean_1yr_90m_Windspeeds.txt'  # data is set to be the same year as price_file
 
-lmp_file = "2019_gen_by_fuel.csv"
-gen_file = "toAdd.csv"
-windspeed_file = "toAdd.csv"
+# ----------------------------------------
+# begin processing
+# ----------------------------------------
+wrk_dir = os.getcwd()
+os.chdir(data_folder)
+data_dir = os.getcwd()
 
 # ----------------------------------------
 # Emission factors (kg CO2/million btu)
@@ -33,120 +42,126 @@ heat_rates = {'Coal': 10015, 'Gas': 11138, 'Hydro': 0.0, 'Multiple Fuels': 13352
 # ----------------------------------------
 # Pricing
 # ----------------------------------------
-df_price = pd.read_csv('2019_rt_hrl_lmps.csv')  # $/MWh
+os.chdir(data_dir)
+df_price = pd.read_csv(price_file)  # $/MWh
+os.chdir(wrk_dir)
 
 # set index
+df_price.datetime_beginning_ept = pd.to_datetime(df_price.datetime_beginning_ept)
 df_price = df_price.set_index('datetime_beginning_ept')
+
+# create columns to store generation, VRE and emissions
+df_price['price_dollarsPerMWh'] = df_price.loc[:, 'system_energy_price_rt']
 
 # drop columns that we don't need
 df_price = df_price.drop(
-    columns=['datetime_beginning_utc', 'pnode_id', 'pnode_name', 'voltage', 'equipment', 'type', 'zone', 'total_lmp_rt',
+    columns=['system_energy_price_rt', 'datetime_beginning_utc', 'pnode_id', 'pnode_name', 'voltage', 'equipment',
+             'type', 'zone', 'total_lmp_rt',
              'congestion_price_rt', 'marginal_loss_price_rt', 'row_is_current', 'version_nbr'])
 
 # save and plot
-df_price.to_csv('COE.csv')
+df_price.to_csv('price.csv')
 df_price.plot()
-plt.savefig('COE.png')
+plt.tight_layout()
+plt.savefig('price.png')
 
 # ----------------------------------------
-# Total generation
+# Generation by fuel ->
+#   total generation
+#   emissions
+#   generation by VRE (variable renewable energy)
 # ----------------------------------------
-df_gen = pd.read_csv('2019_gen_by_fuel.csv')
+os.chdir(data_dir)
+df_gen = pd.read_csv(generation_by_fuel_file)
+os.chdir(wrk_dir)
 
 # convert to datetime and set as index
 df_gen.datetime_beginning_ept = pd.to_datetime(df_gen.datetime_beginning_ept)
 df_gen = df_gen.set_index('datetime_beginning_ept')
 
 # drop columns that we don't need
-df_gen = df_gen.drop(columns=['datetime_beginning_utc', 'is_renewable', 'fuel_type', 'fuel_percentage_of_total'])
+df_gen = df_gen.drop(columns=['datetime_beginning_utc', 'is_renewable'])
 
-# resample to an hourly basis, sum values (total generation)
+# create columns to store generation, VRE and emissions
+df_gen['generation_MW'] = np.nan
+df_gen['VRE_MW'] = np.nan
+df_gen['emissions_tonCO2PerMWh'] = np.nan
+
+# calculate emissions (kg CO2/ kWh) per fuel and VRE
+for fuel_type in emission_factors.keys():
+    # select indices
+    ind = df_gen['fuel_type'] == fuel_type
+
+    # generation
+    df_gen.loc[ind, 'generation_MW'] = df_gen.loc[ind, 'mw']
+
+    # VRE
+    if fuel_type == 'Solar' or fuel_type == 'Wind':
+        df_gen.loc[ind, 'VRE_MW'] = df_gen.loc[ind, 'mw']
+
+    # emissions
+    df_gen.loc[ind, 'emissions_tonCO2PerMWh'] = df_gen.loc[ind, 'fuel_percentage_of_total'] * heat_rates[fuel_type] * \
+                                                emission_factors[fuel_type] / 1E6
+
+# resample to an hourly basis, sum values
 df_gen = df_gen.resample('H').sum()
 
-# Get rid of any zero values, and replace with previous non-zero
-df_gen.mw = df_gen['mw'].replace(to_replace=0, method='ffill')
+# drop columns that we don't need
+df_gen = df_gen.drop(columns=['mw', 'fuel_percentage_of_total'])
 
-# Scale by new maximum
-new_max = 500 # MW
-df_gen.mw = df_gen.mw / df_gen.mw.max() * new_max
+# replace 0 generation with average values
+ind = df_gen.loc[:, 'generation_MW'] == 0.0
+df_gen.loc[ind, 'generation_MW'] = df_gen.loc[:, 'generation_MW'].mean()
+df_gen.loc[ind, 'VRE_MW'] = df_gen.loc[:, 'VRE_MW'].mean()
+df_gen.loc[ind, 'emissions_tonCO2PerMWh'] = df_gen.loc[:, 'emissions_tonCO2PerMWh'].mean()
 
 # save and plot
 df_gen.to_csv('generation.csv')
-df_gen.plot()
-plt.savefig('generation.png')
 
-# ----------------------------------------
-# Generation type -> emissions
-# ----------------------------------------
-df_emi = pd.read_csv('2019_gen_by_fuel.csv')
+df_gen.plot(y='generation_MW')
+plt.tight_layout()
+plt.savefig('generation_MW.png')
 
-# convert to datetime and set as index
-df_emi.datetime_beginning_ept = pd.to_datetime(df_emi.datetime_beginning_ept)
-df_emi = df_emi.set_index('datetime_beginning_ept')
+df_gen.plot(y='VRE_MW')
+plt.tight_layout()
+plt.savefig('VRE.png')
 
-# drop columns that we don't need
-df_emi = df_emi.drop(columns=['datetime_beginning_utc', 'is_renewable', 'mw'])
-
-# create column to store emissions
-df_emi['emissions'] = 0.0
-
-# calculate emissions (kg CO2/ kWh) per fuel
-for fuel_type in emission_factors.keys():
-    ind = df_emi['fuel_type'] == fuel_type
-    df_emi.loc[ind, 'emissions'] = df_emi.loc[ind, 'fuel_percentage_of_total'] * heat_rates[fuel_type] * \
-                                   emission_factors[fuel_type] / 1E6
-
-# resample to an hourly basis, sum values (total emissions)
-df_emi = df_emi.resample('H').sum()
-
-# drop columns that we don't need
-df_emi = df_emi.drop(columns=['fuel_percentage_of_total'])
-
-# save and plot
-df_emi.to_csv('emissions.csv')
-df_emi.plot()
-plt.savefig('emissions.png')
+df_gen.plot(y='emissions_tonCO2PerMWh')
+plt.tight_layout()
+plt.savefig('emissions_tonCO2PerMWh.png')
 
 # ----------------------------------------
 # Wind speed
 # ----------------------------------------
-os.chdir("../data/raw_data/wind_speed")
-df_ws = pd.read_csv('buoy.z01.00.20141213.000000.6nb00120_lidar_20141213_20160530.txt')
-os.chdir(wrkdir)
+os.chdir(data_dir)
+df_ws = pd.read_csv(wind_speed_file, delimiter=' ')
+os.chdir(wrk_dir)
 
-# only keep the hub height of interest
-df_ws = df_ws[df_ws[' height(m)'] == 86.9]
+# set year to be the same as price file
+df_ws.year = df_price.index[0].year
 
-# only keep the year of interest (2015)
-df_ws = df_ws[df_ws['year'] == 2015]
-
-# rename columns to remove spacing in day/time columns
-df_ws = df_ws.rename(
-    columns={" month": "month", " day": "day", " hour": "hour", " minute": "minute", " second": "second"})
-
-# create new column in datetime format and set as inde
+# create new column in datetime format and set as index
 daytime = pd.to_datetime(df_ws[['year', 'month', 'day', 'hour', 'minute', 'second']])
 df_ws['daytime'] = daytime
 df_ws = df_ws.set_index('daytime')
 
-# drop columns that we don't need
-df_ws = df_ws.drop(columns=[' range(m)', ' wind speed standard deviation (m/s)', ' wind direction (deg)',
-                            ' wind direction standard deviation (deg)', ' attitude flag', '  signal strength',
-                            ' signal strength threshold'])
-
-# drop na values
-df_ws = df_ws.dropna()
-
-# upsample to minute basis to account for missing values
-df_ws = df_ws.resample('T').fillna('pad')
-
-# downsample to an hourly basis
+# resample on hourly basis
 df_ws = df_ws.resample('H').mean()
 
 # drop columns that we no longer need
-df_ws = df_ws.drop(columns=['year', 'month', 'day', 'hour', 'minute', 'second', ' height(m)'])
+df_ws = df_ws.drop(columns=['year', 'month', 'day', 'hour', 'minute', 'second'])
 
 # save and plot
 df_ws.to_csv('wind_speed.csv')
 df_ws.plot()
+plt.tight_layout()
 plt.savefig('wind_speed.png')
+
+# ----------------------------------------
+# Combine into a single results file
+# ----------------------------------------
+df = df_gen.join(df_price)
+df = df.join(df_ws)
+df = df.fillna(method='ffill')  # replace nan with next valid value
+
+df.to_csv('model_inputs.csv')

@@ -30,7 +30,7 @@ def pwr_grid_buy(model, t):
 
 # energy
 def energy_capacity_well_min(model, t):
-    return 0.0 <= model.E_well[t]
+    return model.E_well_min <= model.E_well[t]
 
 
 def energy_capacity_well_max(model, t):

@@ -28,9 +28,10 @@ class ocaes:
         inputs['X_exp'] = 500.0  # expander
 
         # Storage performance
-        inputs['pwr2energy'] = 5.0  # relation between power and energy [-]
+        inputs['pwr2energy'] = 10.0  # relation between power and energy [-]
         inputs['eta_storage'] = 0.75  # round trip efficiency [-]
         inputs['initial_storage_fr'] = 0.5  # initial storage level, fraction of max [-]
+        inputs['min_storage_fr'] = 0.0  # minimum storage level, fraction of max [-]
 
         # Capital costs [$/MW]
         inputs['C_wind'] = 4444.0 * 1000.0
@@ -85,13 +86,15 @@ class ocaes:
             inputs['V_well'] = 0.0
 
             # battery lifetime
-            inputs['L_well'] = 15.0
-            inputs['L_exp'] = 15.0
-            inputs['L_cmp'] = 15.0
+            inputs['L_well'] = 10.0
+            inputs['L_exp'] = 10.0
+            inputs['L_cmp'] = 10.0
 
             # Storage performance
-            inputs['pwr2energy'] = 2.0  # relation between power and energy [-]
+            inputs['pwr2energy'] = 10.0  # relation between power and energy [-]
             inputs['eta_storage'] = 0.90  # round trip efficiency [-]
+            inputs['min_storage_fr'] = 0.2  # minimum storage level, fraction of max [-]
+            inputs['initial_storage_fr'] = 0.6  # initial storage level, fraction of max [-]
 
         if storage_type == 'wind_only':
             inputs['X_well'] = 0
@@ -116,8 +119,13 @@ class ocaes:
         data.loc[data.windspeed_ms < inputs['wt_cutin'], 'P_wind_MW'] = 0.0  # Cut-in
         data.loc[data.windspeed_ms >= inputs['wt_rated'], 'P_wind_MW'] = 1.0  # Rated
         data.loc[data.windspeed_ms >= inputs['wt_cutout'], 'P_wind_MW'] = 0.0  # cut-out
-
         data.loc[:, 'P_wind_MW'] = data.loc[:, 'P_wind_MW'] * inputs['X_wind']
+
+        # COVE calculations
+        data.loc[:, 'R'] = data.price_dollarsPerMWh / data.price_dollarsPerMWh.mean() # normalized price
+        # data.loc[:, 'D'] = data.generation_MW / data.generation_MW.mean() # normalized demand
+        data.loc[:, 'R'] = (data.generation_MW  - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
+        # data.loc[:, 'Q'] = data.VRE_MW / data.generation_MW.mean() # normalized VRE production
 
         # ================================
         # Process data
@@ -157,6 +165,8 @@ class ocaes:
         model.X_exp = Param(initialize=inputs['X_exp'])
 
         # storage performance
+        model.E_well_min = Param(initialize=inputs['min_storage_fr'] * inputs['X_well'] * inputs[
+            'pwr2energy'])  # minimum energy storage [MWh]
         model.E_well_max = Param(initialize=inputs['X_well'] * inputs['pwr2energy'])  # maximum energy storage [MWh]
         model.E_well_init = Param(initialize=inputs['initial_storage_fr'] * inputs['X_well'] * inputs[
             'pwr2energy'])  # Initial (and final) energy storage level [-]
@@ -280,7 +290,6 @@ class ocaes:
         results = opt.solve(instance)
         print("Solver status               : " + str(results.solver.status))
         print("Solver termination condition: " + str(results.solver.termination_condition))
-        print(results)
 
         # Store model, instance and results
         self.model = model
@@ -315,6 +324,13 @@ class ocaes:
 
     def calculate_LCOE(self, s):
         return s['yearly_costs'] / s['yearly_electricity']
+
+    def post_process(self, s):
+        revenue = s['yearly_revenue'] / s['yearly_electricity'] * 1e-3  # $/kWh
+        LCOE = s['yearly_costs'] / s['yearly_electricity'] * 1e-3  # $/kWh
+        COVE = s['yearly_costs'] / s['yearly_electricity'] * 1e-3  # $/kWh
+        avoided_emissions = s['avoided_emissions'] / s['yearly_electricity']  # ton/MWh
+        return revenue, LCOE, COVE, avoided_emissions
 
     def plot_overview(self, start=1, stop=168, dpi=300, savename='results_overview'):
         # get results
