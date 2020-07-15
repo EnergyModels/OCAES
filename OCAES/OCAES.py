@@ -50,8 +50,9 @@ class ocaes:
         inputs['F_cmp'] = 0.0
         inputs['F_exp'] = 0.0
 
-        # Interest rate
-        inputs['i'] = 0.05  # initial estimate
+        # Interest rate and inflation
+        inputs['interest'] = 0.05  # interest rate [fr]
+        inputs['inflation'] = 0.025  # inflation rate [fr]
 
         # Loan lifetime [y]
         inputs['L_wind'] = 25.0
@@ -73,7 +74,7 @@ class ocaes:
 
         if storage_type == 'battery':
             # place all costs on expander
-            inputs['C_exp'] = 1876.0 * 1000.0  # $/MW
+            inputs['C_exp'] = 5038.0 * 1000.0  # $/MW
             inputs['F_exp'] = 10.0 * 1000.0
             inputs['V_exp'] = 0.03 / 100.0 * 1000.0
 
@@ -92,9 +93,7 @@ class ocaes:
 
             # Storage performance
             inputs['pwr2energy'] = 10.0  # relation between power and energy [-]
-            inputs['eta_storage'] = 0.90  # round trip efficiency [-]
-            inputs['min_storage_fr'] = 0.2  # minimum storage level, fraction of max [-]
-            inputs['initial_storage_fr'] = 0.6  # initial storage level, fraction of max [-]
+            inputs['eta_storage'] = 0.86  # round trip efficiency [-]
 
         if storage_type == 'wind_only':
             inputs['X_well'] = 0
@@ -122,9 +121,10 @@ class ocaes:
         data.loc[:, 'P_wind_MW'] = data.loc[:, 'P_wind_MW'] * inputs['X_wind']
 
         # COVE calculations
-        data.loc[:, 'R'] = data.price_dollarsPerMWh / data.price_dollarsPerMWh.mean() # normalized price
+        data.loc[:, 'R'] = data.price_dollarsPerMWh / data.price_dollarsPerMWh.mean()  # normalized price
         # data.loc[:, 'D'] = data.generation_MW / data.generation_MW.mean() # normalized demand
-        data.loc[:, 'R'] = (data.generation_MW  - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
+        data.loc[:, 'R'] = (
+                    data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
         # data.loc[:, 'Q'] = data.VRE_MW / data.generation_MW.mean() # normalized VRE production
 
         # ================================
@@ -191,8 +191,9 @@ class ocaes:
         model.F_cmp = Param(initialize=inputs['F_cmp'])
         model.F_exp = Param(initialize=inputs['F_exp'])
 
-        # Interest rate [fr]
-        model.i = Param(initialize=inputs['i'])
+        # Real discount rate [fr]
+        i = inputs['interest'] - inputs['inflation']
+        model.i = Param(initialize=i)
 
         # Loan lifetime [y]
         model.L_wind = Param(initialize=inputs['L_wind'])
@@ -200,11 +201,11 @@ class ocaes:
         model.L_cmp = Param(initialize=inputs['L_cmp'])
         model.L_exp = Param(initialize=inputs['L_exp'])
 
-        # Annual capital costs - calculated with npf function pmt [$/MW]
-        model.AC_wind = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_wind'], inputs['C_wind']))
-        model.AC_well = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_well'], inputs['C_well']))
-        model.AC_cmp = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_cmp'], inputs['C_cmp']))
-        model.AC_exp = Param(initialize=-1.0 * npf.pmt(inputs['i'], inputs['L_exp'], inputs['C_exp']))
+        # Capital Recovery Factor, real [fr]
+        model.CRF_wind = Param(initialize=i + (i / ((1 + i) ** inputs['L_wind'] - 1.0)))
+        model.CRF_well = Param(initialize=i + (i / ((1 + i) ** inputs['L_well'] - 1.0)))
+        model.CRF_cmp = Param(initialize=-i + (i / ((1 + i) ** inputs['L_cmp'] - 1.0)))
+        model.CRF_exp = Param(initialize=-i + (i / ((1 + i) ** inputs['L_exp'] - 1.0)))
 
         # ----------------
         # Variables (upper case)

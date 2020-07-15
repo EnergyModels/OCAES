@@ -30,7 +30,7 @@ def pwr_grid_buy(model, t):
 
 # energy
 def energy_capacity_well_min(model, t):
-    return model.E_well_min <= model.E_well[t]
+    return model.E_well_minii <= model.E_well[t]
 
 
 def energy_capacity_well_max(model, t):
@@ -101,7 +101,10 @@ def yearly_revenue(model):
 
 def yearly_costs(model):
     # capital costs = capacity * annual costs
-    capital = model.X_wind * model.AC_wind + model.X_well * model.AC_well + model.X_cmp * model.AC_cmp + model.X_exp * model.AC_exp
+    capital = model.X_wind * model.C_wind * model.FCR_wind + \
+              model.X_well * model.C_well * model.FCR_well + \
+              model.X_cmp * model.C_cmp * model.FCR_cmp + \
+              model.X_exp * model.C_exp * model.FCR_exp
 
     # fixed costs
     fixed = model.X_wind * model.F_wind + model.X_well * model.F_well + \
@@ -121,8 +124,16 @@ def yearly_profit(model):
 
 
 # ----------------
+# value of electricity (denominator of COVE)
+# ----------------
+def yearly_electricity_value(model):
+    return model.yearly_electricity_value == model.delta_t * sum(
+        model.P_grid_sell[t] * model.price_grid[t] for t in model.t) / model.price_grid_average * 8760 / (
+                   model.T * model.delta_t)
+
+
+# ----------------
 # objective
 # ----------------
-def objective(model):  # Objective - maximize total revenue
-    return model.total_revenue
-    # return model.costs / sum(model.E_grid[t] * model.delta_t for t in model.t) # LCOE
+def objective(model):  # Objective - maximize electricity value
+    return model.yearly_electricity_value
