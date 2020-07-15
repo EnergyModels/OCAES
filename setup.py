@@ -9,4 +9,4 @@ setup(name='OCAES',
       license='MIT',
       packages=['OCAES'],
       zip_safe=False,
-      install_requires=['pyomo', 'pandas', 'numpy', 'seaborn', 'matplotlib', 'scipy', 'joblib'])
+      install_requires=['pyomo', 'pandas', 'numpy', 'seaborn', 'matplotlib', 'scipy', 'joblib', 'xlrd'])

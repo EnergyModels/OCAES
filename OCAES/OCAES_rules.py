@@ -30,7 +30,7 @@ def pwr_grid_buy(model, t):
 
 # energy
 def energy_capacity_well_min(model, t):
-    return model.E_well_minii <= model.E_well[t]
+    return model.E_well_min <= model.E_well[t]
 
 
 def energy_capacity_well_max(model, t):
@@ -101,10 +101,10 @@ def yearly_revenue(model):
 
 def yearly_costs(model):
     # capital costs = capacity * annual costs
-    capital = model.X_wind * model.C_wind * model.FCR_wind + \
-              model.X_well * model.C_well * model.FCR_well + \
-              model.X_cmp * model.C_cmp * model.FCR_cmp + \
-              model.X_exp * model.C_exp * model.FCR_exp
+    capital = model.X_wind * model.C_wind * model. CRF_wind + \
+              model.X_well * model.C_well * model.CRF_well + \
+              model.X_cmp * model.C_cmp * model.CRF_cmp + \
+              model.X_exp * model.C_exp * model.CRF_exp
 
     # fixed costs
     fixed = model.X_wind * model.F_wind + model.X_well * model.F_well + \

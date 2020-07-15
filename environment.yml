@@ -1,0 +1,14 @@
+name: ocaes-py3
+channels:
+    - defaults
+    - conda-forge
+dependencies:
+    - python=3.7.3
+    - pyomo
+    - pandas
+    - numpy
+    - seaborn
+    - matplotlib
+    - scipy
+    - joblib
+    - xlrd

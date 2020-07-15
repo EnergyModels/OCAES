@@ -124,7 +124,7 @@ class ocaes:
         data.loc[:, 'R'] = data.price_dollarsPerMWh / data.price_dollarsPerMWh.mean()  # normalized price
         # data.loc[:, 'D'] = data.generation_MW / data.generation_MW.mean() # normalized demand
         data.loc[:, 'R'] = (
-                    data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
+                data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
         # data.loc[:, 'Q'] = data.VRE_MW / data.generation_MW.mean() # normalized VRE production
 
         # ================================
@@ -329,7 +329,7 @@ class ocaes:
     def post_process(self, s):
         revenue = s['yearly_revenue'] / s['yearly_electricity'] * 1e-3  # $/kWh
         LCOE = s['yearly_costs'] / s['yearly_electricity'] * 1e-3  # $/kWh
-        COVE = s['yearly_costs'] / s['yearly_electricity'] * 1e-3  # $/kWh
+        COVE = s['yearly_costs'] / s['yearly_electricity_value'] * 1e-3  # $/kWh
         avoided_emissions = s['avoided_emissions'] / s['yearly_electricity']  # ton/MWh
         return revenue, LCOE, COVE, avoided_emissions
 
