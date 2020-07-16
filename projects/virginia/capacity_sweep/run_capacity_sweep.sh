@@ -8,7 +8,7 @@ module purge
 module load anaconda/2019.10-py3.7
 
 # activate environment
-source activate OCAES-py3
+source activate ocaes-py3
 
 # set the NUM_PROCS env variable for the Python script
 export NUM_PROCS=$SLURM_CPUS_PER_TASK
