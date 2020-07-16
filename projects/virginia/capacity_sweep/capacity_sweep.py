@@ -49,12 +49,12 @@ def parameter_sweep(sweep_input):
     revenue, LCOE, COVE, avoided_emissions = model.post_process(s)
 
     # save results
-    results = pd.Series(index=('revenue', 'LCOE', 'COVE', 'avoided_emissions', 'solve_time'))
+    results = pd.Series(index=('revenue', 'LCOE', 'COVE', 'avoided_emissions', 'solve_time'), dtype='float64')
     results['revenue'] = revenue
     results['LCOE'] = LCOE
     results['COVE'] = COVE
     results['avoided_emissions'] = avoided_emissions
-    results['solve_time'] = time.time() - start
+    results['solve_time'] = time.time() - t0
 
     # combine inputs and results to return in single series
     single_output = pd.concat([sweep_input, results])
@@ -71,10 +71,10 @@ if __name__ == '__main__':
     # ==============
     scenarios_filename = 'scenarios.xlsx'  # Excel file with scenario inputs
     scenarios = ['wind_only', '4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes']  # Excel sheet_names
-    iterations = [1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
-    ncpus = 3  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
+    iterations = [1, 1, 1, 5, 5]  # number of runs per scenario per capacity (same order as scenarios)
+    ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
     timeseries_filenames = ['timeseries_inputs_2019.csv']  # list of csv files
-    capacities = np.arange(1, 501, 500)
+    capacities = np.arange(0, 500, 5)
 
     # ------------------
     # create sweep_inputs dataframe

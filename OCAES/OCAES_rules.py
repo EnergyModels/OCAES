@@ -101,19 +101,17 @@ def yearly_revenue(model):
 
 def yearly_costs(model):
     # capital costs = capacity * annual costs
-    capital = model.X_wind * model.C_wind * model. CRF_wind + \
-              model.X_well * model.C_well * model.CRF_well + \
-              model.X_cmp * model.C_cmp * model.CRF_cmp + \
-              model.X_exp * model.C_exp * model.CRF_exp
+    capital = model.CRF_wind * model.X_wind * model.C_wind + \
+              model.CRF_well * model.X_well * model.C_well + \
+              model.CRF_cmp * model.X_cmp * model.C_cmp + \
+              model.CRF_exp * model.X_exp * model.C_exp
 
     # fixed costs
-    fixed = model.X_wind * model.F_wind + model.X_well * model.F_well + \
-            model.X_cmp * model.F_cmp + model.X_exp * model.F_exp
+    fixed = model.X_wind * model.F_wind + model.X_well * model.F_well + model.X_cmp * model.F_cmp + model.X_exp * model.F_exp
 
     # variable costs
-    variable = model.V_wind * model.delta_t * sum(model.P_wind[t] for t in model.t) + \
-               model.V_cmp * model.delta_t * sum(model.P_cmp[t] for t in model.t) + \
-               model.V_exp * model.delta_t * sum(model.P_exp[t] for t in model.t)
+    variable = model.V_wind * model.delta_t * sum(model.P_wind[t] for t in model.t) + model.V_cmp * model.delta_t * sum(
+        model.P_cmp[t] for t in model.t) + model.V_exp * model.delta_t * sum(model.P_exp[t] for t in model.t)
     variable = variable * 8760 / (model.T * model.delta_t)  # scale to one year
 
     return model.yearly_costs == capital + fixed + variable
@@ -136,4 +134,5 @@ def yearly_electricity_value(model):
 # objective
 # ----------------
 def objective(model):  # Objective - maximize electricity value
+    # return model.yearly_revenue
     return model.yearly_electricity_value

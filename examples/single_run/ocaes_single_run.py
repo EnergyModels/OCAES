@@ -4,9 +4,11 @@ from OCAES import ocaes
 # ----------------------
 # create and run model
 # ----------------------
-data = pd.read_csv('data_manual.csv')
+data = pd.read_csv('timeseries_inputs_2019.csv')
 inputs = ocaes.get_default_inputs(storage_type='battery')
-# inputs['X_well'] = 0
+# inputs['C_well'] = 5000.0
+# inputs['X_well'] = 50.0
+# inputs['L_well'] = 50.0
 # inputs['X_cmp'] = 0
 # inputs['X_exp'] = 0
 model = ocaes(data, inputs)

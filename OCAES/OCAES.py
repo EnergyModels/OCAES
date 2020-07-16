@@ -109,6 +109,18 @@ class ocaes:
         self.results = []
 
         # ================================
+        # check for proper inputs
+        # ================================
+        if inputs['L_wind'] < 1.0:
+            inputs['L_wind'] = 1.0
+        if inputs['L_well'] < 1.0:
+            inputs['L_well'] = 1.0
+        if inputs['L_cmp'] < 1.0:
+            inputs['L_cmp'] = 1.0
+        if inputs['L_exp'] < 1.0:
+            inputs['L_exp'] = 1.0
+
+        # ================================
         # Calculate wind power generated (fraction of rated)
         # wind farm power curve Ax^3 + Bx^2 + Cx + D (min = 0.0, max = 1.0
         # ================================
@@ -153,16 +165,17 @@ class ocaes:
         model.price_grid = Param(model.t,
                                  initialize=price_dict)  # Grid locational marginal price (LMP) of electricity by hour
         model.emissions_grid = Param(model.t, initialize=emissions_dict)  # Grid emissions by hour
+        model.price_grid_average = Param(initialize=data.price_dollarsPerMWh.mean())
 
         # general
         model.delta_t = Param(initialize=inputs['delta_t'])  # time step [hr]
         model.T = Param(initialize=T)  # number of time steps
 
         # power capacity [MW]
-        model.X_wind = Param(initialize=inputs['X_wind'])
-        model.X_well = Param(initialize=inputs['X_well'])
-        model.X_cmp = Param(initialize=inputs['X_cmp'])
-        model.X_exp = Param(initialize=inputs['X_exp'])
+        model.X_wind = Param(initialize=float(inputs['X_wind']))
+        model.X_well = Param(initialize=float(inputs['X_well']))
+        model.X_cmp = Param(initialize=float(inputs['X_cmp']))
+        model.X_exp = Param(initialize=float(inputs['X_exp']))
 
         # storage performance
         model.E_well_min = Param(initialize=inputs['min_storage_fr'] * inputs['X_well'] * inputs[
@@ -175,10 +188,10 @@ class ocaes:
             initialize=inputs['eta_storage'] ** 0.5)  # Storage single direction efficiency [-]
 
         # capital costs [$/MW]
-        model.C_wind = Param(initialize=inputs['C_wind'])
-        model.C_well = Param(initialize=inputs['C_well'])
-        model.C_cmp = Param(initialize=inputs['C_cmp'])
-        model.C_exp = Param(initialize=inputs['C_exp'])
+        model.C_wind = Param(initialize=float(inputs['C_wind']))
+        model.C_well = Param(initialize=float(inputs['C_well']))
+        model.C_cmp = Param(initialize=float(inputs['C_cmp']))
+        model.C_exp = Param(initialize=float(inputs['C_exp']))
 
         # variable costs [$/MWh]
         model.V_wind = Param(initialize=inputs['V_wind'])
@@ -202,10 +215,10 @@ class ocaes:
         model.L_exp = Param(initialize=inputs['L_exp'])
 
         # Capital Recovery Factor, real [fr]
-        model.CRF_wind = Param(initialize=i + (i / ((1 + i) ** inputs['L_wind'] - 1.0)))
-        model.CRF_well = Param(initialize=i + (i / ((1 + i) ** inputs['L_well'] - 1.0)))
-        model.CRF_cmp = Param(initialize=-i + (i / ((1 + i) ** inputs['L_cmp'] - 1.0)))
-        model.CRF_exp = Param(initialize=-i + (i / ((1 + i) ** inputs['L_exp'] - 1.0)))
+        model.CRF_wind = Param(initialize=float(i + (i / ((1 + i) ** inputs['L_wind'] - 1.0))))
+        model.CRF_well = Param(initialize=float(i + (i / ((1 + i) ** inputs['L_well'] - 1.0))))
+        model.CRF_cmp = Param(initialize=float(i + (i / ((1 + i) ** inputs['L_cmp'] - 1.0))))
+        model.CRF_exp = Param(initialize=float(i + (i / ((1 + i) ** inputs['L_exp'] - 1.0))))
 
         # ----------------
         # Variables (upper case)
@@ -234,6 +247,8 @@ class ocaes:
         model.yearly_costs = Var(within=Reals, initialize=0.0)
         model.yearly_profit = Var(within=Reals, initialize=0.0)
 
+        # COVE
+        model.yearly_electricity_value = Var(within=Reals, initialize=0.0)
         # ----------------
         # Constraints (prefixed with cnst)
         # ----------------
@@ -270,6 +285,9 @@ class ocaes:
         model.cnst_yearly_costs = Constraint(rule=rules.yearly_costs)
         model.cnst_yearly_profit = Constraint(rule=rules.yearly_profit)
 
+        # COVE
+        model.cnst_yearly_electricity_value = Constraint(rule=rules.yearly_electricity_value)
+
         # ----------------
         # Objective
         # ----------------
@@ -299,7 +317,7 @@ class ocaes:
 
     def get_full_results(self):
 
-        s = pd.Series()
+        s = pd.Series(dtype='float64')
         df = pd.DataFrame()
 
         # Variable values
