@@ -3,7 +3,6 @@ from pyomo.environ import *
 import matplotlib.pyplot as plt
 import seaborn as sns
 from OCAES import OCAES_rules as rules
-import numpy_financial as npf
 
 
 class ocaes:
