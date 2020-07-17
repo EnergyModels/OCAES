@@ -72,9 +72,10 @@ if __name__ == '__main__':
     scenarios_filename = 'scenarios.xlsx'  # Excel file with scenario inputs
     scenarios = ['wind_only', '4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes']  # Excel sheet_names
     iterations = [1, 1, 1, 5, 5]  # number of runs per scenario per capacity (same order as scenarios)
-    ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
-    timeseries_filenames = ['timeseries_inputs_2019.csv']  # list of csv files
-    capacities = np.arange(0, 500, 5)
+    ncpus = 6 # int(os.getenv('NUM_PROCS'))  # number of cpus to use
+    timeseries_filenames = ['timeseries_inputs_2015.csv', 'timeseries_inputs_2017.csv',
+                            'timeseries_inputs_2019.csv', 'timeseries_inputs_multiyear.csv']  # list of csv files
+    capacities = np.arange(0, 501, 5)
 
     # ------------------
     # create sweep_inputs dataframe

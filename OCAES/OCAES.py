@@ -134,8 +134,8 @@ class ocaes:
         # COVE calculations
         data.loc[:, 'R'] = data.price_dollarsPerMWh / data.price_dollarsPerMWh.mean()  # normalized price
         # data.loc[:, 'D'] = data.generation_MW / data.generation_MW.mean() # normalized demand
-        data.loc[:, 'R'] = (
-                data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
+        # data.loc[:, 'R'] = (
+        #         data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
         # data.loc[:, 'Q'] = data.VRE_MW / data.generation_MW.mean() # normalized VRE production
 
         # ================================
