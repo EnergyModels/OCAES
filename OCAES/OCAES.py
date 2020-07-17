@@ -303,8 +303,19 @@ class ocaes:
             instance = model.create_instance(report_timing=False)
         instance.preprocess()
 
+        # set solver
+        if SolverFactory('gurobi').available():
+            opt = SolverFactory("gurobi")
+        elif SolverFactory('cplex').available():
+            opt = SolverFactory("cplex")
+        elif SolverFactory('glpk').available():
+            opt = SolverFactory("glpk")
+        elif SolverFactory('cbc').available():
+            opt = SolverFactory("cbc")
+        else:
+            print('Warning could not find a suitable solver')
+
         # solve
-        opt = SolverFactory("cplex")
         results = opt.solve(instance)
         print("Solver status               : " + str(results.solver.status))
         print("Solver termination condition: " + str(results.solver.termination_condition))
