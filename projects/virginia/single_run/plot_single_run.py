@@ -62,11 +62,11 @@ for i in range(nrows):
 
     # indicate y-variables for each subplot(row)
     if i == 0:
-        y_label = 'Locational Marginal Price\n[$/MWh]'
+        y_label = 'Electricity price\n[$/MWh]'
         y_convert = 1.0
         y_vars = ['price_grid']
         y_var_labels = ['Price']
-        c_list = [colors[7]]
+        c_list = [(0,0,0)]
         markers = ['o']
         styles = ['-']
 
@@ -75,16 +75,16 @@ for i in range(nrows):
         y_convert = 1.0
         y_vars = ['P_wind', 'P_grid_sell', 'P_grid_buy']
         y_var_labels = ['Wind', 'Sold to grid', 'Bought from grid']
-        c_list = [colors[0], colors[1], colors[1]]
+        c_list = [colors[2], colors[5], colors[4]]
         markers = ['^', 'v', 'o']
-        styles = ['-', '--', '-']
+        styles = ['-', '-', '-']
 
     elif i == 2:
         y_label = 'OCAES power\n[MW]'
         y_convert = 1.0
         y_vars = ['P_cmp', 'P_exp']
         y_var_labels = ['Compressor', 'Expander']
-        c_list = [colors[3], colors[2]]
+        c_list = [colors[0], colors[1]]
         markers = ['+', 's']
         styles = ['-', '-']
 
@@ -93,7 +93,7 @@ for i in range(nrows):
         y_convert = 1.0
         y_vars = ['E_well']
         y_var_labels = ['Storage']
-        c_list = [colors[0]]
+        c_list = [colors[7]]
         markers = ['^']
         styles = ['-']
 
