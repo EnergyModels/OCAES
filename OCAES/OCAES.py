@@ -258,6 +258,7 @@ class ocaes:
         model.cnst_pwr_capacity_well_out = Constraint(model.t, rule=rules.pwr_capacity_well_out)
         model.cnst_pwr_grid_sell = Constraint(model.t, rule=rules.pwr_grid_sell)
         model.cnst_pwr_grid_buy = Constraint(model.t, rule=rules.pwr_grid_buy)
+        model.cnst_pwr_grid_limit = Constraint(model.t, rule=rules.pwr_grid_limit)
 
         # capacity - energy
         model.cnst_energy_capacity_well_min = Constraint(model.t, rule=rules.energy_capacity_well_min)

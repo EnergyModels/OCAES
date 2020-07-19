@@ -24,6 +24,9 @@ df = pd.read_csv('results_timeseries.csv')
 # df.loc[:, 'hydrostatic'] = 14.0235
 # df.loc[:, 'MAOP'] = 17.34005775
 
+# add entry for time
+df.loc[:, 'time'] = df.index
+
 # Set Color Palette
 colors = sns.color_palette()
 
@@ -47,6 +50,7 @@ f, a = plt.subplots(nrows=nrows, ncols=1, sharex='col', squeeze=False)
 x_var = 'time'
 x_label = 'Time [hr]'
 x_convert = 1.0
+n_entries = [0, 72]  # start and end entries - leave empty to plot all
 
 # array to hold legends
 leg = []
@@ -58,45 +62,49 @@ for i in range(nrows):
 
     # indicate y-variables for each subplot(row)
     if i == 0:
-        y_label = 'Mass flow rate\n[kg/s]'
+        y_label = 'Locational Marginal Price\n[$/MWh]'
         y_convert = 1.0
-        y_vars = ['m_dot_cmp', 'm_dot_exp']
-        y_var_labels = ['Compressor', 'Expander']
-        c_list = [colors[0], colors[1]]
-        markers = ['^', 'v']
-        styles = ['-', '-']
-
-    elif i == 1:
-        y_label = 'Air stored\n[kton]'
-        y_convert = 1.0e-6
-        y_vars = ['m_store']
-        y_var_labels = ['Air stored']
+        y_vars = ['price_grid']
+        y_var_labels = ['Price']
         c_list = [colors[7]]
         markers = ['o']
         styles = ['-']
 
-    elif i == 2:
-        y_label = 'Pressure\n[MPa]'
+    elif i == 1:
+        y_label = 'Power\n[MW]'
         y_convert = 1.0
-        y_vars = ['MAOP', 'p3', 'hydrostatic','p2',  'p1']
-        y_var_labels = ['MAOP', 'Aquifer', 'Hydrostatic','Bottom of well',  'Top of well']
-        c_list = [colors[3], colors[2], (0, 0, 0), colors[5],  colors[4]]
-        markers = ['+', 's', 'x', '<', '>']
-        styles = ['--', '-', '--', '-', '-']
+        y_vars = ['P_wind', 'P_grid_sell', 'P_grid_buy']
+        y_var_labels = ['Wind', 'Sold to grid', 'Bought from grid']
+        c_list = [colors[0], colors[1], colors[1]]
+        markers = ['^', 'v', 'o']
+        styles = ['-', '--', '-']
+
+    elif i == 2:
+        y_label = 'OCAES power\n[MW]'
+        y_convert = 1.0
+        y_vars = ['P_cmp', 'P_exp']
+        y_var_labels = ['Compressor', 'Expander']
+        c_list = [colors[3], colors[2]]
+        markers = ['+', 's']
+        styles = ['-', '-']
 
     else:  # if i == 3:
-        y_label = 'Power\n[MW]'
-        y_convert = 1.0e-3
-        y_vars = ['pwr_cmp', 'pwr_exp']
-        y_var_labels = ['Compressor', 'Expander']
-        c_list = [colors[0], colors[1]]
-        markers = ['^', 'v']
-        styles = ['-', '-']
+        y_label = 'Energy storage\n[MWh]'
+        y_convert = 1.0
+        y_vars = ['E_well']
+        y_var_labels = ['Storage']
+        c_list = [colors[0]]
+        markers = ['^']
+        styles = ['-']
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
-        x = df.loc[:, x_var] * x_convert
-        y = df.loc[:, y_var] * y_convert
+        if len(n_entries) > 0:
+            x = df.loc[n_entries[0]:n_entries[1], x_var] * x_convert
+            y = df.loc[n_entries[0]:n_entries[1], y_var] * y_convert
+        else:  # otherwise plot all
+            x = df.loc[:, x_var] * x_convert
+            y = df.loc[:, y_var] * y_convert
 
         # plot as lines
         ax.plot(x, y, c=c, label=y_var_label, linewidth=1.5, linestyle=style)
@@ -135,5 +143,5 @@ f = plt.gcf()
 f.set_size_inches(width, height)
 
 # save and close
-plt.savefig('Fig_Perf_Model_Overview.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
+plt.savefig('Fig_Optimization_Model_Overview.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
 # plt.close()

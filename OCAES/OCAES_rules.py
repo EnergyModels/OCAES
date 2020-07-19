@@ -28,6 +28,10 @@ def pwr_grid_buy(model, t):
     return model.P_grid_buy[t] <= model.X_wind
 
 
+def pwr_grid_limit(model, t):
+    return model.P_grid_sell[t] + model.P_grid_buy[t] <= model.X_wind
+
+
 # energy
 def energy_capacity_well_min(model, t):
     return model.E_well_min <= model.E_well[t]
