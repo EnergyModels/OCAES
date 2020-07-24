@@ -10,7 +10,7 @@ import numpy as np
 results_filename = "sweep_results.csv"
 
 # figure output
-savename = "Fig_Optimization_Results_talk.png"
+savename = "Fig_Optimization_Results_COVE.png"
 DPI = 400  # Set resolution for saving figures
 
 x_vars = ["capacity"]
@@ -18,10 +18,10 @@ x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0, 1.0]
 x_limits = [[], []]
 
-y_vars_all = ["revenue", "LCOE"]
-y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)"]
-y_converts_all = [1.0, 1.0]
-y_limits_all = [[], []]
+y_vars_all = ["COVE"]
+y_labels_all = ["COVE\n($/kWh)"]
+y_converts_all = [1.0]
+y_limits_all = [[0.08, 0.18]]
 
 series_var = 'scenario'
 series = ['wind_only', '4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes']
@@ -47,15 +47,13 @@ df = pd.read_csv(results_filename)
 for timeseries_filename in df.timeseries_filename.unique():
     n = len(y_vars_all)
     if timeseries_filename == "timeseries_inputs_2015.csv":
-        savename = "Fig_Optimization_Results_2015_talk.png"
-        n = 3
+        savename = "Fig_Optimization_Results_2015_COVE.png"
     elif timeseries_filename == "timeseries_inputs_2017.csv":
-        savename = "Fig_Optimization_Results_2017_talk.png"
+        savename = "Fig_Optimization_Results_2017_COVE.png"
     elif timeseries_filename == "timeseries_inputs_2019.csv":
-        savename = "Fig_Optimization_Results_2019_talk.png"
+        savename = "Fig_Optimization_Results_2019_COVE.png"
     elif timeseries_filename == "timeseries_inputs_multiyear.csv":
-        savename = "Fig_Optimization_Results_multiyear_talk.png"
-        n = 3
+        savename = "Fig_Optimization_Results_multiyear_COVE.png"
     print(savename)
 
     y_vars = y_vars_all[0:n]
@@ -71,7 +69,7 @@ for timeseries_filename in df.timeseries_filename.unique():
     # Single column: 90mm = 3.54 in
     # 1.5 column: 140 mm = 5.51 in
     # 2 column: 190 mm = 7.48 i
-    width = 7.48 # inches
+    width = 5.51  # inches
     height = 4.5  # inches
 
     # Create plot
@@ -84,7 +82,6 @@ for timeseries_filename in df.timeseries_filename.unique():
     sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatino", "serif"]})
     sns.set_context("paper")
     sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
-    # sns.set(font_scale=1.3)
 
     # Set marker shapes and sizes
     marker_size = 4
@@ -132,19 +129,22 @@ for timeseries_filename in df.timeseries_filename.unique():
             sns.despine(ax=ax, )
             ax.tick_params(top=False, right=False)
 
+            if len(y_limit) == 2:
+                plt.ylim(y_limit)
+
             # Axes limits
 
             # Caption labels
-            caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-            plt.text(-0.075, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
-                     transform=ax.transAxes, fontsize='medium', fontweight='bold')
+            # caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
+            # plt.text(-0.075, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+            #          transform=ax.transAxes, fontsize='medium', fontweight='bold')
             count = count + 1
 
     # Legend
     # y_pos = j / 2 + 0.5
     # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
     x_pos = 0.45
-    leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.3), ncol=5, loc='upper center')
+    leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.15), ncol=3, loc='upper center')
 
     # Adjust layout
     # plt.tight_layout()
@@ -154,3 +154,27 @@ for timeseries_filename in df.timeseries_filename.unique():
     # Save Figure
     plt.savefig(savename, dpi=DPI, bbox_extra_artists=leg)
     # plt.close()
+
+# -----------
+# save summary of results at lowest COVE
+# -----------
+# average groups by sheetname and capacity
+df2 = df.groupby(['sheetname', 'capacity']).mean()
+# reset index
+df2 = df2.reset_index()
+# # find lowest COVE
+low = df2.COVE.min()
+ind = df2.loc[:, 'COVE'] == low
+# get capacity for lowest COVE
+capacity = float(df2.loc[ind, 'capacity'].values)
+# select all indices at that capacity
+ind2 = df2.loc[:, 'capacity'] == capacity
+df3 = df2.loc[ind2, :]
+
+# calculate % diff from wind_only
+ind = df3.loc[:, 'sheetname'] == 'wind_only'
+df3.loc[:, 'basis'] = float(df3.loc[ind, 'COVE'].values)
+df3.loc[:, 'pct_diff'] = (df3.COVE - df3.basis) / df3.basis * 100
+
+# save entries
+df3.to_csv('lowest_COVE.csv')
