@@ -10,7 +10,7 @@ import numpy as np
 results_filename = "sweep_results.csv"
 
 # figure output
-savename = "Fig_Optimization_Results.png"
+savename = "Fig_Optimization_Results_talk.png"
 DPI = 400  # Set resolution for saving figures
 
 x_vars = ["capacity"]
@@ -18,10 +18,10 @@ x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0, 1.0]
 x_limits = [[], []]
 
-y_vars_all = ["revenue", "LCOE", "COVE", "avoided_emissions"]
-y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)", "Avoided emissions\n(t/MWh)"]
-y_converts_all = [1.0, 1.0, 1.0, 1.0]
-y_limits_all = [[], [], [], []]
+y_vars_all = ["revenue", "LCOE", "COVE"]
+y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)"]
+y_converts_all = [1.0, 1.0, 1.0]
+y_limits_all = [[], [], []]
 
 series_var = 'scenario'
 series = ['wind_only', '4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes']
@@ -47,14 +47,14 @@ df = pd.read_csv(results_filename)
 for timeseries_filename in df.timeseries_filename.unique():
     n = len(y_vars_all)
     if timeseries_filename == "timeseries_inputs_2015.csv":
-        savename = "Fig_Optimization_Results_2015.png"
+        savename = "Fig_Optimization_Results_2015_talk.png"
         n = 3
     elif timeseries_filename == "timeseries_inputs_2017.csv":
-        savename = "Fig_Optimization_Results_2017.png"
+        savename = "Fig_Optimization_Results_2017_talk.png"
     elif timeseries_filename == "timeseries_inputs_2019.csv":
-        savename = "Fig_Optimization_Results_2019.png"
+        savename = "Fig_Optimization_Results_2019_talk.png"
     elif timeseries_filename == "timeseries_inputs_multiyear.csv":
-        savename = "Fig_Optimization_Results_multiyear.png"
+        savename = "Fig_Optimization_Results_multiyear_talk.png"
         n = 3
     print(savename)
 
@@ -71,8 +71,8 @@ for timeseries_filename in df.timeseries_filename.unique():
     # Single column: 90mm = 3.54 in
     # 1.5 column: 140 mm = 5.51 in
     # 2 column: 190 mm = 7.48 i
-    width = 7.48  # inches
-    height = 6.5  # inches
+    width = 7.48 # inches
+    height = 4.5  # inches
 
     # Create plot
     f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', squeeze=False)
@@ -84,6 +84,7 @@ for timeseries_filename in df.timeseries_filename.unique():
     sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatino", "serif"]})
     sns.set_context("paper")
     sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
+    # sns.set(font_scale=1.3)
 
     # Set marker shapes and sizes
     marker_size = 4
@@ -143,7 +144,7 @@ for timeseries_filename in df.timeseries_filename.unique():
     # y_pos = j / 2 + 0.5
     # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
     x_pos = 0.45
-    leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.6), ncol=5, loc='upper center')
+    leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.5), ncol=5, loc='upper center')
 
     # Adjust layout
     # plt.tight_layout()
