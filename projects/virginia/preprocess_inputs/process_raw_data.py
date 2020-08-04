@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # inputs
 # ----------------------------------------
 data_folders = ['2015', '2017', '2019']
-price_files = ['rt_hrl_lmps_DOM_15.csv', 'rt_hrl_lmps_DOM_17.csv', 'rt_hrl_lmps_DOM_19.csv']
+price_files = ['da_hrl_lmps_DOM_15.csv', 'da_hrl_lmps_DOM_17.csv', 'da_hrl_lmps_DOM_19.csv']
 generation_by_fuel_files = ['2015_gen_by_fuel.csv', '2017_gen_by_fuel.csv', '2019_gen_by_fuel.csv']
 wind_speed_files = ['Clean_1yr_90m_Windspeeds.txt', 'Clean_1yr_90m_Windspeeds.txt', 'Clean_1yr_90m_Windspeeds.txt']
 output_filenames = ['timeseries_inputs_2015.csv', 'timeseries_inputs_2017.csv', 'timeseries_inputs_2019.csv']
@@ -23,7 +23,7 @@ df_comb = pd.DataFrame()
 wrk_dir = os.getcwd()
 
 for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_filename in \
-        zip(data_folders, price_files, generation_by_fuel_files, wind_speed_files, output_filenames):
+        zip(data_folders, price_files,  generation_by_fuel_files, wind_speed_files, output_filenames):
 
     # ----------------------------------------
     # begin processing
@@ -62,14 +62,33 @@ for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_fi
     df_price.datetime_beginning_ept = pd.to_datetime(df_price.datetime_beginning_ept)
     df_price = df_price.set_index('datetime_beginning_ept')
 
-    # create columns to store generation, VRE and emissions
-    df_price['price_dollarsPerMWh'] = df_price.loc[:, 'system_energy_price_rt']
+    price_type = price_file[:2]
 
-    # drop columns that we don't need
-    df_price = df_price.drop(
-        columns=['system_energy_price_rt', 'datetime_beginning_utc', 'pnode_id', 'pnode_name', 'voltage', 'equipment',
-                 'type', 'zone', 'total_lmp_rt',
-                 'congestion_price_rt', 'marginal_loss_price_rt', 'row_is_current', 'version_nbr'])
+    if price_type == 'da':
+        # create columns to store generation, VRE and emissions
+        df_price['price_dollarsPerMWh'] = df_price.loc[:, 'total_lmp_da']
+
+        # drop columns that we don't need
+        df_price = df_price.drop(
+            columns=['system_energy_price_da', 'datetime_beginning_utc', 'pnode_id', 'pnode_name', 'voltage',
+                     'equipment',
+                     'type', 'zone', 'total_lmp_da',
+                     'congestion_price_da', 'marginal_loss_price_da', 'row_is_current', 'version_nbr'])
+
+    elif price_type == 'rt':
+        # create columns to store generation, VRE and emissions
+        df_price['price_dollarsPerMWh'] = df_price.loc[:, 'total_lmp_rt']
+
+        # drop columns that we don't need
+        df_price = df_price.drop(
+            columns=['system_energy_price_rt', 'datetime_beginning_utc', 'pnode_id', 'pnode_name', 'voltage',
+                     'equipment',
+                     'type', 'zone', 'total_lmp_rt',
+                     'congestion_price_rt', 'marginal_loss_price_rt', 'row_is_current', 'version_nbr'])
+
+    else:
+        print('Warning - price file type not recognized')
+        print('file should start with da or rt, for day ahead or real time pricing')
 
     # save and plot
     if write_all_data:
@@ -103,18 +122,18 @@ for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_fi
         # select indices
         ind = df_gen['fuel_type'] == fuel_type
 
-        # check if fuel is used
-        if sum(ind) > 0:
-            # generation
-            df_gen.loc[ind, 'generation_MW'] = df_gen.loc[ind, 'mw']
+    # check if fuel is used
+    if sum(ind) > 0:
+        # generation
+        df_gen.loc[ind, 'generation_MW'] = df_gen.loc[ind, 'mw']
 
-            # VRE
-            if fuel_type == 'Solar' or fuel_type == 'Wind':
-                df_gen.loc[ind, 'VRE_MW'] = df_gen.loc[ind, 'mw']
+    # VRE
+    if fuel_type == 'Solar' or fuel_type == 'Wind':
+        df_gen.loc[ind, 'VRE_MW'] = df_gen.loc[ind, 'mw']
 
-            # emissions
-            df_gen.loc[ind, 'emissions_tonCO2PerMWh'] = df_gen.loc[ind, 'fuel_percentage_of_total'] * heat_rates[
-                fuel_type] * emission_factors[fuel_type] / 1E6
+    # emissions
+    df_gen.loc[ind, 'emissions_tonCO2PerMWh'] = df_gen.loc[ind, 'fuel_percentage_of_total'] * heat_rates[
+        fuel_type] * emission_factors[fuel_type] / 1E6
 
     # resample to an hourly basis, sum values
     df_gen = df_gen.resample('H').sum()
