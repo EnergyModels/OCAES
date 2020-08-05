@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='OCAES',
-      version='0.0.5',
+      version='0.0.6',
       description='Technoeconomic optimization of offshore compressed air energy storage (OCAES) systems',
       url='https://github.com/EnergyModels/OCAES',
       author='Jeff Bennett',
@@ -9,4 +9,4 @@ setup(name='OCAES',
       license='MIT',
       packages=['OCAES'],
       zip_safe=False,
-      install_requires=['pyomo', 'pandas', 'numpy', 'seaborn', 'matplotlib', 'scipy', 'joblib', 'xlrd'])
+      install_requires=['pyomo', 'pandas', 'numpy', 'seaborn', 'matplotlib', 'scipy', 'joblib', 'xlrd', 'xlwt'])

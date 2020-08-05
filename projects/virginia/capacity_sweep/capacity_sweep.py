@@ -5,6 +5,11 @@ from joblib import Parallel, delayed, parallel_backend
 import time
 import os
 from datetime import datetime
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+# OCAES_costs
 
 
 # =====================
@@ -72,10 +77,17 @@ if __name__ == '__main__':
     scenarios_filename = 'scenarios.xlsx'  # Excel file with scenario inputs
     scenarios = ['wind_only', '4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes']  # Excel sheet_names
     iterations = [1, 1, 1, 5, 5]  # number of runs per scenario per capacity (same order as scenarios)
-    ncpus = 6 # int(os.getenv('NUM_PROCS'))  # number of cpus to use
+    ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
     timeseries_filenames = ['timeseries_inputs_2015.csv', 'timeseries_inputs_2017.csv',
                             'timeseries_inputs_2019.csv', 'timeseries_inputs_multiyear.csv']  # list of csv files
     capacities = np.arange(0, 501, 5)
+
+    # OCAES costs - CAPEX ($/kW) @ specfic power ratings (MW)
+    pwr = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230,
+           240, 250, 260, 270, 280, 290, 300]
+    CAPEX = [7742.14, 4593.61, 3544.10, 3019.34, 2704.49, 2494.59, 2344.66, 2232.21, 2144.75, 2074.78, 2017.54, 1969.83,
+             1929.47, 1894.87, 1864.88, 1838.64, 1815.49, 1794.91, 1776.50, 1759.93, 1744.94, 1731.31, 1718.86, 1707.45,
+             1696.96, 1687.27, 1678.30, 1669.97, 1662.22, 1654.98]
 
     # ------------------
     # create sweep_inputs dataframe
@@ -93,13 +105,24 @@ if __name__ == '__main__':
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
 
+    # Overwrite OCAES CAPEX with inputs
+    for sheetname in ['10_hr_ocaes', '24_hr_ocaes']:
+        ind = sweep_inputs.sheetname == sheetname
+        sweep_inputs.loc[ind, 'C_well'] = 0.0
+        sweep_inputs.loc[ind, 'C_cmp'] = 0.0
+        sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], pwr, CAPEX) * 1000.0
+
+    # plot overview of inputs for a visual check
+    sns.scatterplot(x='capacity', y='C_exp', hue='sheetname', style='sheetname', data = sweep_inputs)
+    plt.savefig('sweep_inputs_C_exp.png')
+
     # count number of cases
     n_cases = sweep_inputs.shape[0]
 
     # save inputs
     sweep_inputs.to_csv('sweep_inputs.csv')
-	
-	try:
+
+    try:
         ncpus = int(os.getenv('NUM_PROCS'))  # try to use variable defined in sbatch script
     except:
         ncpus = ncpus  # otherwise default to this number of cores
