@@ -122,18 +122,18 @@ for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_fi
         # select indices
         ind = df_gen['fuel_type'] == fuel_type
 
-    # check if fuel is used
-    if sum(ind) > 0:
-        # generation
-        df_gen.loc[ind, 'generation_MW'] = df_gen.loc[ind, 'mw']
+        # check if fuel is used
+        if sum(ind) > 0:
+            # generation
+            df_gen.loc[ind, 'generation_MW'] = df_gen.loc[ind, 'mw']
 
-    # VRE
-    if fuel_type == 'Solar' or fuel_type == 'Wind':
-        df_gen.loc[ind, 'VRE_MW'] = df_gen.loc[ind, 'mw']
+        # VRE
+        if fuel_type == 'Solar' or fuel_type == 'Wind':
+            df_gen.loc[ind, 'VRE_MW'] = df_gen.loc[ind, 'mw']
 
-    # emissions
-    df_gen.loc[ind, 'emissions_tonCO2PerMWh'] = df_gen.loc[ind, 'fuel_percentage_of_total'] * heat_rates[
-        fuel_type] * emission_factors[fuel_type] / 1E6
+        # emissions
+        df_gen.loc[ind, 'emissions_tonCO2PerMWh'] = df_gen.loc[ind, 'fuel_percentage_of_total'] * heat_rates[
+            fuel_type] * emission_factors[fuel_type] / 1E6
 
     # resample to an hourly basis, sum values
     df_gen = df_gen.resample('H').sum()

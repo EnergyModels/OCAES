@@ -98,6 +98,11 @@ if __name__ == '__main__':
 
     # save inputs
     sweep_inputs.to_csv('sweep_inputs.csv')
+	
+	try:
+        ncpus = int(os.getenv('NUM_PROCS'))  # try to use variable defined in sbatch script
+    except:
+        ncpus = ncpus  # otherwise default to this number of cores
 
     # run each case using parallelization
     with parallel_backend('multiprocessing', n_jobs=ncpus):
