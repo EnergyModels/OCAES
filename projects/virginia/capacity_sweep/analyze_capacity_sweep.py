@@ -92,6 +92,7 @@ for timeseries_filename in df.timeseries_filename.unique():
         revenue.loc[val, year] = float(df3.loc[ind, 'revenue'])
         revenue_pct.loc[val, year] = float(df3.loc[ind, 'revenue_pct_diff'])
 
+
 # create formatted table
 COVE_format = pd.concat([COVE.loc[:, '2015'], COVE_pct.loc[:, '2015'],
                          COVE.loc[:, '2017'], COVE_pct.loc[:, '2017'],

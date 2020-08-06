@@ -9,9 +9,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-# OCAES_costs
-
-
 # =====================
 # function to enable parameter sweep
 # =====================
@@ -36,13 +33,13 @@ def parameter_sweep(sweep_input):
     # scenario specific inputs
     model_inputs['pwr2energy'] = sweep_input['pwr2energy']
     model_inputs['eta_storage'] = sweep_input['eta_storage']
-    model_inputs['C_well'] = sweep_input['C_well']
-    model_inputs['C_cmp'] = sweep_input['C_cmp']
+    model_inputs['C_well'] = 0.0
+    model_inputs['C_cmp'] = 0.0
     model_inputs['C_exp'] = sweep_input['C_exp']
-    model_inputs['V_cmp'] = sweep_input['V_cmp']
+    model_inputs['V_cmp'] = 0.0
     model_inputs['V_exp'] = sweep_input['V_exp']
-    model_inputs['F_well'] = sweep_input['F_well']
-    model_inputs['F_cmp'] = sweep_input['F_cmp']
+    model_inputs['F_well'] = 0.0
+    model_inputs['F_cmp'] = 0.0
     model_inputs['F_exp'] = sweep_input['F_exp']
     model_inputs['L_well'] = sweep_input['L_well']
     model_inputs['L_cmp'] = sweep_input['L_cmp']
@@ -75,19 +72,16 @@ if __name__ == '__main__':
     # user inputs
     # ==============
     scenarios_filename = 'scenarios.xlsx'  # Excel file with scenario inputs
-    scenarios = ['wind_only', '4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes']  # Excel sheet_names
-    iterations = [1, 1, 1, 5, 5]  # number of runs per scenario per capacity (same order as scenarios)
+    costs_filename = 'cost_study_results.csv'  # CSV file with scenario inputs
+    sizing_filename = 'sizing_study_results.csv'  # CSV file with sizing study results
+    scenarios = ['wind_only', '4_hr_batt', '10_hr_batt',
+                 '10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes']  # Excel sheet_names
+    iterations = [1, 1, 1,
+                  1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
     ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
     timeseries_filenames = ['timeseries_inputs_2015.csv', 'timeseries_inputs_2017.csv',
                             'timeseries_inputs_2019.csv', 'timeseries_inputs_multiyear.csv']  # list of csv files
-    capacities = np.arange(0, 501, 5)
-
-    # OCAES costs - CAPEX ($/kW) @ specfic power ratings (MW)
-    pwr = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230,
-           240, 250, 260, 270, 280, 290, 300]
-    CAPEX = [7742.14, 4593.61, 3544.10, 3019.34, 2704.49, 2494.59, 2344.66, 2232.21, 2144.75, 2074.78, 2017.54, 1969.83,
-             1929.47, 1894.87, 1864.88, 1838.64, 1815.49, 1794.91, 1776.50, 1759.93, 1744.94, 1731.31, 1718.86, 1707.45,
-             1696.96, 1687.27, 1678.30, 1669.97, 1662.22, 1654.98]
+    capacities = np.arange(0, 501, 10)
 
     # ------------------
     # create sweep_inputs dataframe
@@ -105,16 +99,42 @@ if __name__ == '__main__':
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
 
+    # ------------------
+    # import costs and sizing study results
+    # ------------------
+    costs = pd.read_csv(costs_filename)
+    sizing = pd.read_csv(sizing_filename)
+
+    # only use expected permeability results
+    sizing = sizing[sizing.loc[:, 'k_type'] == 'expected']
+
     # Overwrite OCAES CAPEX with inputs
-    for sheetname in ['10_hr_ocaes', '24_hr_ocaes']:
+    for sheetname in ['10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes']:
+        # costs
         ind = sweep_inputs.sheetname == sheetname
-        sweep_inputs.loc[ind, 'C_well'] = 0.0
-        sweep_inputs.loc[ind, 'C_cmp'] = 0.0
-        sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], pwr, CAPEX) * 1000.0
+        sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], costs.capacity_MW,
+                                                   costs.CAPEX_dollars_per_kW) * 1000.0
+        # efficiency
+        ind2 = sizing.loc[:, 'duration_hr'] == sweep_inputs.loc[ind, 'pwr2energy'].unique()[0]
+        sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'], sizing.capacity_MW,
+                                                         sizing.RTE)
 
     # plot overview of inputs for a visual check
-    sns.scatterplot(x='capacity', y='C_exp', hue='sheetname', style='sheetname', data = sweep_inputs)
+    sns.scatterplot(x='capacity', y='C_exp', hue='sheetname', style='sheetname', data=sweep_inputs)
     plt.savefig('sweep_inputs_C_exp.png')
+    plt.close()
+    sns.scatterplot(x='capacity', y='eta_storage', hue='sheetname', style='sheetname', data=sweep_inputs)
+    plt.savefig('sweep_inputs_eta_storage.png')
+    plt.close()
+    sns.scatterplot(x='capacity', y='V_exp', hue='sheetname', style='sheetname', data=sweep_inputs)
+    plt.savefig('sweep_inputs_V_exp.png')
+    plt.close()
+    sns.scatterplot(x='capacity', y='F_exp', hue='sheetname', style='sheetname', data=sweep_inputs)
+    plt.savefig('sweep_inputs_F_exp.png')
+    plt.close()
+    sns.scatterplot(x='capacity', y='pwr2energy', hue='sheetname', style='sheetname', data=sweep_inputs)
+    plt.savefig('sweep_inputs_pwr2energy.png')
+    plt.close()
 
     # count number of cases
     n_cases = sweep_inputs.shape[0]
