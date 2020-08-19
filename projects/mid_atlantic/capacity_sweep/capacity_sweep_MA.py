@@ -80,30 +80,38 @@ if __name__ == '__main__':
     # ==============
     # user inputs
     # ==============
-    scenarios_filename = 'scenarios.xlsx'  # Excel file with scenario inputs
-    costs_filename = 'cost_study_results.csv'  # CSV file with scenario inputs
+    # technologies
+    technologies_filename = 'technologies.xlsx'  # Excel file with scenario inputs
+    technologies = ['wind_only', '4_hr_batt', '10_hr_ocaes', '24_hr_ocaes', ]  # Excel sheet_names
+    iterations = [1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
+    ncpus = 6  # number of cpus to use
+
+    # location based data
+    timeseries_filenames = ['ISONE_timeseries_inputs_2019.csv', 'NYISO_timeseries_inputs_2019.csv',
+                            'PJM_timeseries_inputs_2019.csv']  # list of csv files
     sizing_filename = 'sizing_study_results.csv'  # CSV file with sizing study results
-    scenarios = ['wind_only', '4_hr_batt', '10_hr_batt',
-                 '10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes']  # Excel sheet_names
-    iterations = [1, 1, 1,
-                  1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
-    ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
-    timeseries_filenames = ['timeseries_inputs_2015.csv', 'timeseries_inputs_2017.csv',
-                            'timeseries_inputs_2019.csv', 'timeseries_inputs_multiyear.csv']  # list of csv files
-    capacities = np.arange(0, 501, 10)
+    scenarios = ['ISONE', 'NYISO', 'PJM']  # each scenario corresponds with a timeseries filename
+                                           # and is in the scenario column of sizing results
+
+    # cost data
+    costs_filename = 'cost_study_results.csv'  # CSV file with scenario inputs
+
+    # sweep
+    capacities = np.arange(0, 501, 25)
 
     # ------------------
     # create sweep_inputs dataframe
     # ------------------
     sweep_inputs = pd.DataFrame()
-    for timeseries_filename in timeseries_filenames:
-        for scenario, n_iterations in zip(scenarios, iterations):
-            df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
-            df_scenario.loc[:, 'scenario'] = scenario
-            df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
+    for timeseries_filename, scenario in zip(timeseries_filenames, scenarios):
+        for technology, n_iterations in zip(technologies, iterations):
+            df = monteCarloInputs(technologies_filename, technology, n_iterations)
+            df.loc[:, 'technology'] = technology
+            df.loc[:, 'timeseries_filename'] = timeseries_filename
+            df.loc[:, 'scenario'] = scenario
             for capacity in capacities:
-                df_scenario.loc[:, 'capacity'] = capacity
-                sweep_inputs = sweep_inputs.append(df_scenario)
+                df.loc[:, 'capacity'] = capacity
+                sweep_inputs = sweep_inputs.append(df)
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
@@ -114,19 +122,21 @@ if __name__ == '__main__':
     costs = pd.read_csv(costs_filename)
     sizing = pd.read_csv(sizing_filename)
 
-    # only use expected permeability results
-    sizing = sizing[sizing.loc[:, 'k_type'] == 'expected']
+    # Overwrite OCAES CAPEX and efficiency with inputs
+    for sheetname in ['10_hr_ocaes', '24_hr_ocaes']:
+        for scenario in scenarios:
+            ind = (sweep_inputs.sheetname == sheetname) & \
+                  (sweep_inputs.scenario == scenario)
+            # costs
+            sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], costs.capacity_MW,
+                                                       costs.CAPEX_dollars_per_kW) * 1000.0
+            # efficiency
+            sizing2 = sizing[sizing.loc[:,'scenario']==scenario]
+            sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'], sizing2.capacity_MW,
+                                                             sizing2.RTE)
 
-    # Overwrite OCAES CAPEX with inputs
-    for sheetname in ['10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes']:
-        ind = sweep_inputs.sheetname == sheetname
-        # costs
-        sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], costs.capacity_MW,
-                                                   costs.CAPEX_dollars_per_kW) * 1000.0
-        # efficiency
-        # ind2 = sizing.loc[:, 'duration_hr'] == sweep_inputs.loc[ind, 'pwr2energy'].unique()[0]
-        sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'], sizing.capacity_MW,
-                                                         sizing.RTE)
+    # Remove any entries with bad values (RTE = 0.0)
+    sweep_inputs = sweep_inputs[sweep_inputs.loc[:,'eta_storage']>0.0]
 
     # plot overview of inputs for a visual check
     sns.scatterplot(x='capacity', y='C_exp', hue='sheetname', style='sheetname', data=sweep_inputs)
