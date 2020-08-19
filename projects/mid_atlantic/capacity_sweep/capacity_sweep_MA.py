@@ -138,6 +138,9 @@ if __name__ == '__main__':
     # Remove any entries with bad values (RTE = 0.0)
     sweep_inputs = sweep_inputs[sweep_inputs.loc[:,'eta_storage']>0.0]
 
+    # reset index (appending messes up indices)
+    sweep_inputs = sweep_inputs.reset_index()
+
     # plot overview of inputs for a visual check
     sns.scatterplot(x='capacity', y='C_exp', hue='sheetname', style='sheetname', data=sweep_inputs)
     plt.savefig('sweep_inputs_C_exp.png')
