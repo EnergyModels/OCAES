@@ -10,27 +10,24 @@ import numpy as np
 results_filename = "sweep_results.csv"
 
 # figure output
-savename = "Fig_Optimization_Results_COVE.png"
-DPI = 400  # Set resolution for saving figures
+savename = "Fig_Optimization_Results.png"
+DPI = 600  # Set resolution for saving figures
 
 x_vars = ["capacity"]
 x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0, 1.0]
 x_limits = [[], []]
 
-y_vars_all = ["COVE"]
-y_labels_all = ["COVE\n($/kWh)"]
-y_converts_all = [1.0]
-y_limits_all = [[0.08, 0.12]]
+y_vars_all = ["revenue", "LCOE", "COVE", "avoided_emissions"]
+y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)", "Avoided emissions\n(t/MWh)"]
+y_converts_all = [1.0, 1.0, 1.0, 1.0]
+y_limits_all = [[], [], [0.08, 0.12], []]
 
 series_var = 'scenario'
 series = ['wind_only', '4_hr_batt', '10_hr_batt',
           '10_hr_ocaes', '24_hr_ocaes','48_hr_ocaes', '72_hr_ocaes','168_hr_ocaes']
 series = ['wind_only', '4_hr_batt', '10_hr_batt',
           '10_hr_ocaes', '24_hr_ocaes','168_hr_ocaes']
-series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_batt': 'Battery (10 hr)',
-               '10_hr_ocaes': 'OCAES (10 hr)', '24_hr_ocaes': 'OCAES (24 hr)',
-               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)','168_hr_ocaes': 'OCAES (168 hr)'}
 series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_batt': 'Battery (10 hr)',
                '10_hr_ocaes': 'OCAES (10 hr)', '24_hr_ocaes': 'OCAES (24 hr)',
                '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)','168_hr_ocaes': 'OCAES (168 hr)'}
@@ -56,13 +53,15 @@ df = pd.read_csv(results_filename)
 for timeseries_filename in df.timeseries_filename.unique():
     n = len(y_vars_all)
     if timeseries_filename == "timeseries_inputs_2015.csv":
-        savename = "Fig_Optimization_Results_2015_COVE.png"
+        savename = "Fig_Optimization_Results_2015.png"
+        n = 3
     elif timeseries_filename == "timeseries_inputs_2017.csv":
-        savename = "Fig_Optimization_Results_2017_COVE.png"
+        savename = "Fig_Optimization_Results_2017.png"
     elif timeseries_filename == "timeseries_inputs_2019.csv":
-        savename = "Fig_Optimization_Results_2019_COVE.png"
+        savename = "Fig_Optimization_Results_2019.png"
     elif timeseries_filename == "timeseries_inputs_multiyear.csv":
-        savename = "Fig_Optimization_Results_multiyear_COVE.png"
+        savename = "Fig_Optimization_Results_multiyear.png"
+        n = 3
     print(savename)
 
     y_vars = y_vars_all[0:n]
@@ -78,8 +77,8 @@ for timeseries_filename in df.timeseries_filename.unique():
     # Single column: 90mm = 3.54 in
     # 1.5 column: 140 mm = 5.51 in
     # 2 column: 190 mm = 7.48 i
-    width = 5.51  # inches
-    height = 4.5  # inches
+    width = 7.48  # inches
+    height = 8.0  # inches
 
     # Create plot
     f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', squeeze=False)
@@ -138,27 +137,26 @@ for timeseries_filename in df.timeseries_filename.unique():
             sns.despine(ax=ax, )
             ax.tick_params(top=False, right=False)
 
-            if len(y_limit) == 2:
-                plt.ylim(y_limit)
-
             # Axes limits
+            if len(y_limit)==2:
+                ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
 
             # Caption labels
-            # caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-            # plt.text(-0.075, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
-            #          transform=ax.transAxes, fontsize='medium', fontweight='bold')
+            caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
+            plt.text(-0.075, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+                     transform=ax.transAxes, fontsize='medium', fontweight='bold')
             count = count + 1
 
     # Legend
     # y_pos = j / 2 + 0.5
     # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
     x_pos = 0.45
-    leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.15), ncol=3, loc='upper center')
+    leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.4), ncol=3, loc='upper center')
 
     # Adjust layout
-    plt.tight_layout()
-    # plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)
-    # f.align_ylabels(a[:, 0])  # align y labels
+    # plt.tight_layout()
+    plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)
+    f.align_ylabels(a[:, 0])  # align y labels
 
     # Save Figure
     plt.savefig(savename, dpi=DPI, bbox_extra_artists=leg)

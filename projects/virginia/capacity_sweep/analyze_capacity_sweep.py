@@ -9,9 +9,12 @@ import numpy as np
 # data input
 results_filename = "sweep_results.csv"
 
-series = ['wind_only', '4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes']
+series = ['wind_only', '4_hr_batt', '10_hr_batt',
+          '10_hr_ocaes', '24_hr_ocaes','48_hr_ocaes', '72_hr_ocaes','168_hr_ocaes']
 series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_batt': 'Battery (10 hr)',
-               '10_hr_ocaes': 'OCAES (10 hr)', '24_hr_ocaes': 'OCAES (24 hr)'}
+               '10_hr_ocaes': 'OCAES (10 hr)', '24_hr_ocaes': 'OCAES (24 hr)',
+               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)','168_hr_ocaes': 'OCAES (168 hr)'}
+
 
 # =====================================
 # process data
@@ -57,9 +60,9 @@ for timeseries_filename in df.timeseries_filename.unique():
     # reset index
     df2 = df2.reset_index()
 
-    # # find lowest COVE
-    low = df2.COVE.min()
-    ind = df2.loc[:, 'COVE'] == low
+    # # find lowest COVE for capacity > 0 and not wind_only
+    low = df2[(df2.loc[:, 'sheetname'] != 'wind_only') & (df2.loc[:, 'capacity'] > 0.0)].COVE.min()
+    ind = (df2.loc[:, 'COVE'] == low)
 
     # get capacity for lowest COVE
     capacity = float(df2.loc[ind, 'capacity'].values)
