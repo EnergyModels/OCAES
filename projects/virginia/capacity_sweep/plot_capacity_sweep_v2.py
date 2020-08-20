@@ -113,7 +113,7 @@ for timeseries_filename in df.timeseries_filename.unique():
                 y = y_convert * df.loc[ind, y_var]
 
                 # points
-                ax.plot(x, y, linestyle='', marker=marker, markersize=marker_size,
+                ax.plot(x, y, color=color, linestyle='-', marker=marker, markersize=marker_size,
                         markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor='None',
                         label=series_dict[serie])
                 #

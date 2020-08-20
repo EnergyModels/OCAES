@@ -21,7 +21,7 @@ def parameter_sweep(sweep_input):
     model_inputs = ocaes.get_default_inputs()
 
     # capacity inputs
-    if sweep_input['scenario'] == 'wind_only':
+    if sweep_input['sheetname'] == 'wind_only':
         model_inputs['X_well'] = 0.0
         model_inputs['X_cmp'] = 0.0
         model_inputs['X_exp'] = 0.0
@@ -91,13 +91,13 @@ if __name__ == '__main__':
                             'PJM_timeseries_inputs_2019.csv']  # list of csv files
     sizing_filename = 'sizing_study_results.csv'  # CSV file with sizing study results
     scenarios = ['ISONE', 'NYISO', 'PJM']  # each scenario corresponds with a timeseries filename
-                                           # and is in the scenario column of sizing results
+    # and is in the scenario column of sizing results
 
     # cost data
     costs_filename = 'cost_study_results.csv'  # CSV file with scenario inputs
 
     # sweep
-    capacities = np.arange(0, 501, 25)
+    capacities = np.arange(0, 501, 10)
 
     # ------------------
     # create sweep_inputs dataframe
@@ -122,6 +122,9 @@ if __name__ == '__main__':
     costs = pd.read_csv(costs_filename)
     sizing = pd.read_csv(sizing_filename)
 
+    # remove bad entries from sizing
+    sizing = sizing[sizing.errors==False]
+
     # Overwrite OCAES CAPEX and efficiency with inputs
     for sheetname in ['10_hr_ocaes', '24_hr_ocaes']:
         for scenario in scenarios:
@@ -131,12 +134,12 @@ if __name__ == '__main__':
             sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], costs.capacity_MW,
                                                        costs.CAPEX_dollars_per_kW) * 1000.0
             # efficiency
-            sizing2 = sizing[sizing.loc[:,'scenario']==scenario]
+            sizing2 = sizing[sizing.loc[:, 'scenario'] == scenario]
             sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'], sizing2.capacity_MW,
-                                                             sizing2.RTE)
+                                                             sizing2.RTE, right=-1)
 
-    # Remove any entries with bad values (RTE = 0.0)
-    sweep_inputs = sweep_inputs[sweep_inputs.loc[:,'eta_storage']>0.0]
+    # Remove any entries with bad values (RTE = -1)
+    sweep_inputs = sweep_inputs[sweep_inputs.loc[:, 'eta_storage'] != -1]
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
@@ -185,7 +188,7 @@ if __name__ == '__main__':
     run_time = (end - start) / 3600.0
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    f = open("run_time_history.txt", "a")
+    f = open("history_runtime.txt", "a")
     f.write('\n')
     f.write('Last run : ' + dt_string + '\n')
     f.write('Total run time [h]: ' + str(round(run_time, 3)) + '\n')
