@@ -33,6 +33,7 @@ def parameter_sweep(sweep_input):
     # scenario specific inputs
     model_inputs['pwr2energy'] = sweep_input['pwr2energy']
     model_inputs['eta_storage'] = sweep_input['eta_storage']
+    model_inputs['CC_exp'] = sweep_input['CC_exp']
     model_inputs['C_well'] = 0.0
     model_inputs['C_cmp'] = 0.0
     model_inputs['C_exp'] = sweep_input['C_exp']
