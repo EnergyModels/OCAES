@@ -21,7 +21,7 @@ x_limits = [[], []]
 y_vars_all = ["revenue", "LCOE", "COVE", "avoided_emissions"]
 y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)", "Avoided emissions\n(t/MWh)"]
 y_converts_all = [1.0, 1.0, 1.0, 1.0]
-y_limits_all = [[], [], [0.08, 0.12], []]
+y_limits_all = [[], [], [0.08, 0.12], [0.4,0.5]]
 
 series_var = 'scenario'
 series = ['wind_only', '4_hr_batt', '10_hr_batt',
@@ -52,16 +52,7 @@ df = pd.read_csv(results_filename)
 
 for timeseries_filename in df.timeseries_filename.unique():
     n = len(y_vars_all)
-    if timeseries_filename == "timeseries_inputs_2015.csv":
-        savename = "Fig_Optimization_Results_2015.png"
-        n = 3
-    elif timeseries_filename == "timeseries_inputs_2017.csv":
-        savename = "Fig_Optimization_Results_2017.png"
-    elif timeseries_filename == "timeseries_inputs_2019.csv":
-        savename = "Fig_Optimization_Results_2019.png"
-    elif timeseries_filename == "timeseries_inputs_multiyear.csv":
-        savename = "Fig_Optimization_Results_multiyear.png"
-        n = 3
+    savename = timeseries_filename[:str.find(timeseries_filename,'.')] + '.png'
     print(savename)
 
     y_vars = y_vars_all[0:n]
@@ -143,7 +134,7 @@ for timeseries_filename in df.timeseries_filename.unique():
 
             # Caption labels
             caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-            plt.text(-0.075, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+            plt.text(-0.1, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
                      transform=ax.transAxes, fontsize='medium', fontweight='bold')
             count = count + 1
 

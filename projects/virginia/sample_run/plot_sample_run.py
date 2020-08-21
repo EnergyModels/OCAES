@@ -73,11 +73,11 @@ for i in range(nrows):
     elif i == 1:
         y_label = 'Power\n[MW]'
         y_convert = 1.0
-        y_vars = ['P_wind', 'P_grid_sell', 'P_grid_buy']
-        y_var_labels = ['Wind', 'Sold to grid', 'Bought from grid']
-        c_list = [colors[2], colors[5], colors[7]]
-        markers = ['^', 'v', 'o']
-        styles = ['-', '-', '-']
+        y_vars = ['P_wind', 'P_grid_sell']
+        y_var_labels = ['Wind', 'Sold to grid']
+        c_list = [colors[2], colors[5]]
+        markers = ['^', 'v']
+        styles = ['-', '-']
 
     elif i == 2:
         y_label = 'OCAES power\n[MW]'

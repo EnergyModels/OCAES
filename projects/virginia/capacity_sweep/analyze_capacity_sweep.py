@@ -10,11 +10,10 @@ import numpy as np
 results_filename = "sweep_results.csv"
 
 series = ['wind_only', '4_hr_batt', '10_hr_batt',
-          '10_hr_ocaes', '24_hr_ocaes','48_hr_ocaes', '72_hr_ocaes','168_hr_ocaes']
+          '10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes']
 series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_batt': 'Battery (10 hr)',
                '10_hr_ocaes': 'OCAES (10 hr)', '24_hr_ocaes': 'OCAES (24 hr)',
-               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)','168_hr_ocaes': 'OCAES (168 hr)'}
-
+               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)', '168_hr_ocaes': 'OCAES (168 hr)'}
 
 # =====================================
 # process data
@@ -27,8 +26,8 @@ df = pd.read_csv(results_filename)
 df_smry = pd.DataFrame()
 
 # create dataframe to hold results summary by
-columns = ['2015', '2017', '2019', 'combined']
-index = ['Capacity']
+columns = ['2015_da', '2015_rt', '2017_da', '2017_rt', '2019_da', '2019_rt']
+index = ['Year','Market','Capacity']
 for val in series_dict.values():
     index.append(val)
 COVE = pd.DataFrame(index=index, columns=columns)
@@ -38,14 +37,40 @@ revenue_pct = pd.DataFrame(index=index, columns=columns)
 
 for timeseries_filename in df.timeseries_filename.unique():
 
-    if timeseries_filename == "timeseries_inputs_2015.csv":
+    if timeseries_filename == "da_timeseries_inputs_2015.csv":
+        col = "2015_da"
         year = "2015"
-    elif timeseries_filename == "timeseries_inputs_2017.csv":
+        market = 'Day Ahead'
+    elif timeseries_filename == "rt_timeseries_inputs_2015.csv":
+        col = "2015_rt"
+        year = "2015"
+        market = 'Real time'
+    elif timeseries_filename == "da_timeseries_inputs_2017.csv":
+        col = "2017_da"
         year = "2017"
-    elif timeseries_filename == "timeseries_inputs_2019.csv":
+        market = 'Day Ahead'
+    elif timeseries_filename == "rt_timeseries_inputs_2017.csv":
+        col = "2017_rt"
+        year = "2017"
+        market = 'Real time'
+    elif timeseries_filename == "da_timeseries_inputs_2019.csv":
+        col = "2019_da"
         year = "2019"
-    elif timeseries_filename == "timeseries_inputs_multiyear.csv":
-        year = "combined"
+        market = 'Day Ahead'
+    elif timeseries_filename == "rt_timeseries_inputs_2019.csv":
+        col = "2019_rt"
+        year = "2019"
+        market = 'Real time'
+
+    # save year and market into metric specific dataframes
+    COVE.loc['Year', col] = year
+    COVE.loc['Market', col] = market
+    COVE_pct.loc['Year', col] = year
+    COVE_pct.loc['Market', col] = market
+    revenue.loc['Year', col] = year
+    revenue.loc['Market', col] = market
+    revenue_pct.loc['Year', col] = year
+    revenue_pct.loc['Market', col] = market
 
     # -----------
     # summary of results at lowest COVE
@@ -82,32 +107,35 @@ for timeseries_filename in df.timeseries_filename.unique():
     df3.loc[:, 'timeseries_filename'] = timeseries_filename
     df_smry = df_smry.append(df3, ignore_index=True)
 
-    # save into metric specifc dataframes
-    COVE.loc['Capacity', year] = capacity
-    COVE_pct.loc['Capacity', year] = capacity
-    revenue.loc['Capacity', year] = capacity
-    revenue_pct.loc['Capacity', year] = capacity
+    # save into metric specific dataframes
+    COVE.loc['Capacity', col] = capacity
+    COVE_pct.loc['Capacity', col] = capacity
+    revenue.loc['Capacity', col] = capacity
+    revenue_pct.loc['Capacity', col] = capacity
 
     for key, val in zip(series_dict.keys(), series_dict.values()):
         ind = df3.loc[:, 'sheetname'] == key
-        COVE.loc[val, year] = float(df3.loc[ind, 'COVE'])
-        COVE_pct.loc[val, year] = float(df3.loc[ind, 'COVE_pct_diff'])
-        revenue.loc[val, year] = float(df3.loc[ind, 'revenue'])
-        revenue_pct.loc[val, year] = float(df3.loc[ind, 'revenue_pct_diff'])
-
+        COVE.loc[val, col] = float(df3.loc[ind, 'COVE'])
+        COVE_pct.loc[val, col] = float(df3.loc[ind, 'COVE_pct_diff'])
+        revenue.loc[val, col] = float(df3.loc[ind, 'revenue'])
+        revenue_pct.loc[val, col] = float(df3.loc[ind, 'revenue_pct_diff'])
 
 # create formatted table
-COVE_format = pd.concat([COVE.loc[:, '2015'], COVE_pct.loc[:, '2015'],
-                         COVE.loc[:, '2017'], COVE_pct.loc[:, '2017'],
-                         COVE.loc[:, '2019'], COVE_pct.loc[:, '2019'],
-                         COVE.loc[:, 'combined'], COVE_pct.loc[:, 'combined']]
+COVE_format = pd.concat([COVE.loc[:, '2015_da'], COVE_pct.loc[:, '2015_da'],
+                         COVE.loc[:, '2015_rt'], COVE_pct.loc[:, '2015_rt'],
+                         COVE.loc[:, '2017_da'], COVE_pct.loc[:, '2017_da'],
+                         COVE.loc[:, '2017_rt'], COVE_pct.loc[:, '2017_rt'],
+                         COVE.loc[:, '2019_da'], COVE_pct.loc[:, '2019_da'],
+                         COVE.loc[:, '2019_rt'], COVE_pct.loc[:, '2019_rt']]
                         , axis=1)
 
-revenue_format = pd.concat([revenue.loc[:, '2015'], revenue_pct.loc[:, '2015'],
-                         revenue.loc[:, '2017'], revenue_pct.loc[:, '2017'],
-                         revenue.loc[:, '2019'], revenue_pct.loc[:, '2019'],
-                         revenue.loc[:, 'combined'], revenue_pct.loc[:, 'combined']]
-                        , axis=1)
+revenue_format = pd.concat([revenue.loc[:, '2015_da'], revenue_pct.loc[:, '2015_da'],
+                            revenue.loc[:, '2015_rt'], revenue_pct.loc[:, '2015_rt'],
+                            revenue.loc[:, '2017_da'], revenue_pct.loc[:, '2017_da'],
+                            revenue.loc[:, '2017_rt'], revenue_pct.loc[:, '2017_rt'],
+                            revenue.loc[:, '2019_da'], revenue_pct.loc[:, '2019_da'],
+                            revenue.loc[:, '2019_rt'], revenue_pct.loc[:, '2019_rt'], ]
+                           , axis=1)
 
 # save results
 writer = pd.ExcelWriter('analysis_results.xls')
@@ -119,5 +147,3 @@ revenue.to_excel(writer, sheet_name='revenue')
 revenue_pct.to_excel(writer, sheet_name='revenue_pct')
 df_smry.to_excel(writer, sheet_name='raw')
 writer.close()
-
-
