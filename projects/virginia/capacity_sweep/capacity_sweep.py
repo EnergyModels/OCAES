@@ -117,6 +117,9 @@ if __name__ == '__main__':
     costs = pd.read_csv(costs_filename)
     sizing = pd.read_csv(sizing_filename)
 
+    # remove bad entries from sizing
+    sizing = sizing[sizing.errors == False]
+
     # only use expected permeability results
     sizing = sizing[sizing.loc[:, 'k_type'] == 'expected']
 
@@ -129,7 +132,13 @@ if __name__ == '__main__':
         # efficiency
         # ind2 = sizing.loc[:, 'duration_hr'] == sweep_inputs.loc[ind, 'pwr2energy'].unique()[0]
         sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'], sizing.capacity_MW,
-                                                         sizing.RTE)
+                                                         sizing.RTE, right=-1)
+
+    # Remove any entries with bad values (RTE = -1)
+    sweep_inputs = sweep_inputs[sweep_inputs.loc[:, 'eta_storage'] != -1]
+
+    # reset index (appending messes up indices)
+    sweep_inputs = sweep_inputs.reset_index()
 
     # plot overview of inputs for a visual check
     sns.scatterplot(x='capacity', y='C_exp', hue='sheetname', style='sheetname', data=sweep_inputs)

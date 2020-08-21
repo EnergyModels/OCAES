@@ -125,7 +125,7 @@ if __name__ == '__main__':
     sizing = pd.read_csv(sizing_filename)
 
     # remove bad entries from sizing
-    sizing = sizing[sizing.errors==False]
+    sizing = sizing[sizing.errors == False]
 
     # Overwrite OCAES CAPEX and efficiency with inputs
     for sheetname in ['10_hr_ocaes', '24_hr_ocaes']:

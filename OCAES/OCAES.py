@@ -219,9 +219,9 @@ class ocaes:
         model.L_exp = Param(initialize=inputs['L_exp'])
 
         # Capacity credits
-        model.CC_value = Param(initialize=inputs['CC_value'])
-        model.CC_wind = Param(initialize=inputs['CC_wind'])
-        model.CC_exp = Param(initialize=inputs['CC_exp'])
+        model.CC_value = Param(initialize=float(inputs['CC_value']))
+        model.CC_wind = Param(initialize=float(inputs['CC_wind']))
+        model.CC_exp = Param(initialize=float(inputs['CC_exp']))
 
         # Capital Recovery Factor, real [fr]
         model.CRF_wind = Param(initialize=float(i + (i / ((1 + i) ** inputs['L_wind'] - 1.0))))
