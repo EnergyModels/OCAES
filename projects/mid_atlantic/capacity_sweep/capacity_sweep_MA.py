@@ -58,14 +58,15 @@ def parameter_sweep(sweep_input):
     results['avoided_emissions'] = avoided_emissions
     results['solve_time'] = time.time() - t0
     # additional outputs
-    results['total_revenue_dollars'] = s['total_revenue']
-    results['yearly_revenue_dollars'] = s['yearly_revenue']
+    results['avoided_emissions_tonnes'] = s['avoided_emissions']
+    results['yearly_electricity_MWh'] = s['yearly_electricity']
+    results['yearly_electricity_revenue_dollars'] = s['yearly_electricity_revenue']
+    results['yearly_capacity_credit_dollars'] = s['yearly_capacity_credit']
+    results['yearly_total_revenue_dollars'] = s['yearly_total_revenue']
     results['yearly_costs_dollars'] = s['yearly_costs']
     results['yearly_profit_dollars'] = s['yearly_profit']
-    results['total_electricity_MWh'] = s['total_electricity']
-    results['yearly_electricity_MWh'] = s['yearly_electricity']
     results['yearly_electricity_value_dollars'] = s['yearly_electricity_value']
-    results['avoided_emissions_tonnes'] = s['avoided_emissions']
+    results['price_grid_average_dollarsPerMWh'] = s['price_grid_average']
 
     # combine inputs and results to return in single series
     single_output = pd.concat([sweep_input, results])

@@ -89,19 +89,24 @@ def yearly_electricity(model):
 # ----------------
 # economics
 # ----------------
-def revenue(model, t):
-    return model.revenue[t] == (model.P_grid_sell[t] - model.P_grid_buy[t]) * model.delta_t * model.price_grid[t]
+def electricity_revenue(model, t):
+    return model.electricity_revenue[t] == (model.P_grid_sell[t] - model.P_grid_buy[t]) * \
+           model.delta_t * model.price_grid[t]
 
 
-def total_revenue(model):
-    return model.total_revenue == model.delta_t * sum(
-        (model.P_grid_sell[t] - model.P_grid_buy[t]) * model.price_grid[t] for t in model.t)
-
-
-def yearly_revenue(model):
-    return model.yearly_revenue == model.delta_t * sum(
+def yearly_electricity_revenue(model):
+    return model.yearly_electricity_revenue == model.delta_t * sum(
         (model.P_grid_sell[t] - model.P_grid_buy[t]) * model.price_grid[t] for t in model.t) * 8760 / (
                    model.T * model.delta_t)
+
+
+def yearly_capacity_credit(model):
+    return model.yearly_capacity_credit == model.CC_value * 365 * \
+           min(model.X_wind, model.CC_wind * model.X_wind + model.CC_exp * model.X_exp)
+
+
+def yearly_total_revenue(model):
+    return model.yearly_total_revenue == model.yearly_electricity_revenue + model.yearly_capacity_credit
 
 
 def yearly_costs(model):
@@ -123,7 +128,7 @@ def yearly_costs(model):
 
 
 def yearly_profit(model):
-    return model.yearly_profit == model.yearly_revenue - model.yearly_costs
+    return model.yearly_profit == model.yearly_total_revenue - model.yearly_costs
 
 
 # ----------------

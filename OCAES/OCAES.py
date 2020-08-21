@@ -59,6 +59,11 @@ class ocaes:
         inputs['L_cmp'] = 25.0
         inputs['L_exp'] = 25.0
 
+        # Capacity credits
+        inputs['CC_value'] = 140  # $/MW-day
+        inputs['CC_wind'] = 0.2  # [fr]
+        inputs['CC_exp'] = 1.0  # [fr]
+
         # wind farm performance characteristics
         inputs['wt_cutin'] = 3.16  # Cut-in wind speed [m/s]
         inputs['wt_rated'] = 11.42  # Rated wind speed [m/s]
@@ -213,6 +218,11 @@ class ocaes:
         model.L_cmp = Param(initialize=inputs['L_cmp'])
         model.L_exp = Param(initialize=inputs['L_exp'])
 
+        # Capacity credits
+        model.CC_value = Param(initialize=inputs['CC_value'])
+        model.CC_wind = Param(initialize=inputs['CC_wind'])
+        model.CC_exp = Param(initialize=inputs['CC_exp'])
+
         # Capital Recovery Factor, real [fr]
         model.CRF_wind = Param(initialize=float(i + (i / ((1 + i) ** inputs['L_wind'] - 1.0))))
         model.CRF_well = Param(initialize=float(i + (i / ((1 + i) ** inputs['L_well'] - 1.0))))
@@ -236,18 +246,20 @@ class ocaes:
         model.avoided_emissions = Var(within=Reals, initialize=0.0)  # within reservoir (>0, $)
 
         # electricity (delivered to the grid)
-        model.total_electricity = Var(within=Reals, initialize=0.0)  # total
+        # model.total_electricity = Var(within=Reals, initialize=0.0)  # total
         model.yearly_electricity = Var(within=Reals, initialize=0.0)  # scaled for one year
 
         # Economics
-        model.revenue = Var(model.t, within=Reals, initialize=0.0)
-        model.total_revenue = Var(within=Reals, initialize=0.0)
-        model.yearly_revenue = Var(within=Reals, initialize=0.0)
+        model.electricity_revenue = Var(model.t, within=Reals, initialize=0.0)
+        model.yearly_electricity_revenue = Var(within=Reals, initialize=0.0)
+        model.yearly_capacity_credit = Var(within=Reals, initialize=0.0)
+        model.yearly_total_revenue = Var(within=Reals, initialize=0.0)
         model.yearly_costs = Var(within=Reals, initialize=0.0)
         model.yearly_profit = Var(within=Reals, initialize=0.0)
 
         # COVE
         model.yearly_electricity_value = Var(within=Reals, initialize=0.0)
+
         # ----------------
         # Constraints (prefixed with cnst)
         # ----------------
@@ -275,13 +287,14 @@ class ocaes:
         model.cnst_emissions = Constraint(rule=rules.emissions)
 
         # electricity
-        model.cnst_total_electricity = Constraint(rule=rules.total_electricity)
+        # model.cnst_total_electricity = Constraint(rule=rules.total_electricity)
         model.cnst_yearly_electricity = Constraint(rule=rules.yearly_electricity)
 
         # economics
-        model.cnst_revenue = Constraint(model.t, rule=rules.revenue)
-        model.cnst_total_revenue = Constraint(rule=rules.total_revenue)
-        model.cnst_yearly_revenue = Constraint(rule=rules.yearly_revenue)
+        model.cnst_electricity_revenue = Constraint(model.t, rule=rules.electricity_revenue)
+        model.cnst_yearly_electricity_revenue = Constraint(rule=rules.yearly_electricity_revenue)
+        model.cnst_yearly_capacity_credit = Constraint(rule=rules.yearly_capacity_credit)
+        model.cnst_yearly_total_revenue = Constraint(rule=rules.yearly_total_revenue)
         model.cnst_yearly_costs = Constraint(rule=rules.yearly_costs)
         model.cnst_yearly_profit = Constraint(rule=rules.yearly_profit)
 
@@ -356,7 +369,7 @@ class ocaes:
         return s['yearly_costs'] / s['yearly_electricity']
 
     def post_process(self, s):
-        revenue = s['yearly_revenue'] / s['yearly_electricity'] * 1e-3  # $/kWh
+        revenue = s['yearly_total_revenue'] / s['yearly_electricity'] * 1e-3  # $/kWh
         LCOE = s['yearly_costs'] / s['yearly_electricity'] * 1e-3  # $/kWh
         COVE = s['yearly_costs'] / s['yearly_electricity_value'] * 1e-3  # $/kWh
         avoided_emissions = s['avoided_emissions'] / s['yearly_electricity']  # ton/MWh
@@ -421,7 +434,7 @@ class ocaes:
                 y_label = 'Price [$/MWh]'
 
             else:  # if i == 3:
-                y_vars = ['revenue']
+                y_vars = ['electricity_revenue']
                 y_var_names = ['Revenue']
                 y_colors = [colors[0]]
                 y_convert = 1.0

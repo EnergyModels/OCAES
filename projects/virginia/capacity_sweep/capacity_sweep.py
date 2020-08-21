@@ -58,14 +58,15 @@ def parameter_sweep(sweep_input):
     results['avoided_emissions'] = avoided_emissions
     results['solve_time'] = time.time() - t0
     # additional outputs
-    results['total_revenue_dollars'] = s['total_revenue']
-    results['yearly_revenue_dollars'] = s['yearly_revenue']
+    results['avoided_emissions_tonnes'] = s['avoided_emissions']
+    results['yearly_electricity_MWh'] = s['yearly_electricity']
+    results['yearly_electricity_revenue_dollars'] = s['yearly_electricity_revenue']
+    results['yearly_capacity_credit_dollars'] = s['yearly_capacity_credit']
+    results['yearly_total_revenue_dollars'] = s['yearly_total_revenue']
     results['yearly_costs_dollars'] = s['yearly_costs']
     results['yearly_profit_dollars'] = s['yearly_profit']
-    results['total_electricity_MWh'] = s['total_electricity']
-    results['yearly_electricity_MWh'] = s['yearly_electricity']
     results['yearly_electricity_value_dollars'] = s['yearly_electricity_value']
-    results['avoided_emissions_tonnes'] = s['avoided_emissions']
+    results['price_grid_average_dollarsPerMWh'] = s['price_grid_average']
 
     # combine inputs and results to return in single series
     single_output = pd.concat([sweep_input, results])
@@ -88,8 +89,9 @@ if __name__ == '__main__':
     iterations = [1, 1, 1,
                   1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
     ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
-    timeseries_filenames = ['timeseries_inputs_2015.csv', 'timeseries_inputs_2017.csv',
-                            'timeseries_inputs_2019.csv', 'timeseries_inputs_multiyear.csv']  # list of csv files
+    timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
+                            'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
+                            'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     capacities = np.arange(0, 501, 10)
 
     # ------------------

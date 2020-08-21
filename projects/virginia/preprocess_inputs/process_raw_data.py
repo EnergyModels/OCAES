@@ -6,11 +6,21 @@ import matplotlib.pyplot as plt
 # ----------------------------------------
 # inputs
 # ----------------------------------------
-data_folders = ['2015', '2017', '2019']
-price_files = ['da_hrl_lmps_DOM_15.csv', 'da_hrl_lmps_DOM_17.csv', 'da_hrl_lmps_DOM_19.csv']
-generation_by_fuel_files = ['2015_gen_by_fuel.csv', '2017_gen_by_fuel.csv', '2019_gen_by_fuel.csv']
-wind_speed_files = ['Clean_1yr_90m_Windspeeds.txt', 'Clean_1yr_90m_Windspeeds.txt', 'Clean_1yr_90m_Windspeeds.txt']
-output_filenames = ['timeseries_inputs_2015.csv', 'timeseries_inputs_2017.csv', 'timeseries_inputs_2019.csv']
+data_folders = ['2015', '2015',
+                '2017', '2017',
+                '2019', '2019']
+price_files = ['da_hrl_lmps_DOM_15.csv', 'rt_hrl_lmps_DOM_15.csv',
+               'da_hrl_lmps_DOM_17.csv', 'rt_hrl_lmps_DOM_17.csv',
+               'da_hrl_lmps_DOM_19.csv', 'rt_hrl_lmps_DOM_19.csv']
+generation_by_fuel_files = ['2015_gen_by_fuel.csv', '2015_gen_by_fuel.csv',
+                            '2017_gen_by_fuel.csv', '2017_gen_by_fuel.csv',
+                            '2019_gen_by_fuel.csv', '2019_gen_by_fuel.csv']
+wind_speed_files = ['Clean_1yr_90m_Windspeeds.txt', 'Clean_1yr_90m_Windspeeds.txt',
+                    'Clean_1yr_90m_Windspeeds.txt', 'Clean_1yr_90m_Windspeeds.txt',
+                    'Clean_1yr_90m_Windspeeds.txt', 'Clean_1yr_90m_Windspeeds.txt']
+output_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
+                    'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
+                    'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']
 
 # option to output individual column data (good for troubleshooting)
 write_all_data = False
@@ -23,7 +33,7 @@ df_comb = pd.DataFrame()
 wrk_dir = os.getcwd()
 
 for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_filename in \
-        zip(data_folders, price_files,  generation_by_fuel_files, wind_speed_files, output_filenames):
+        zip(data_folders, price_files, generation_by_fuel_files, wind_speed_files, output_filenames):
 
     # ----------------------------------------
     # begin processing
@@ -154,14 +164,17 @@ for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_fi
     df_gen.plot(y='generation_MW')
     plt.tight_layout()
     plt.savefig('generation_MW.png')
+    plt.close()
 
     df_gen.plot(y='VRE_MW')
     plt.tight_layout()
     plt.savefig('VRE.png')
+    plt.close()
 
     df_gen.plot(y='emissions_tonCO2PerMWh')
     plt.tight_layout()
     plt.savefig('emissions_tonCO2PerMWh.png')
+    plt.close()
 
     # ----------------------------------------
     # Wind speed
@@ -188,6 +201,7 @@ for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_fi
     df_ws.plot()
     plt.tight_layout()
     plt.savefig('wind_speed.png')
+    plt.close()
 
     # ----------------------------------------
     # Combine into a single results file
@@ -195,16 +209,20 @@ for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_fi
     df = df_gen.join(df_price)
     df = df.join(df_ws)
     df = df.fillna(method='ffill')  # replace nan with next valid value
-    df.to_csv(output_filename)
-
-    # append multiyear input_file
-    df_comb = df_comb.append(df)
 
     # return to main directory
     os.chdir(wrk_dir)
 
-# ----------------------------------------
-# Save multiyear input_file
-# ----------------------------------------
-df_comb = df_comb.reset_index()
-df_comb.to_csv('timeseries_inputs_multiyear.csv')
+    # save file
+    df.to_csv(output_filename)
+
+    # append multiyear input_file
+    # df_comb = df_comb.append(df)
+#
+#
+#
+# # ----------------------------------------
+# # Save multiyear input_file
+# # ----------------------------------------
+# df_comb = df_comb.reset_index()
+# df_comb.to_csv('timeseries_inputs_multiyear.csv')
