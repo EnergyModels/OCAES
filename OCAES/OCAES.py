@@ -19,6 +19,7 @@ class ocaes:
 
         inputs['debug'] = False  # debug
         inputs['delta_t'] = 1  # [hr]
+        inputs['objective'] = 'REVENUE'  # objective function, options are COVE or REVENUE
 
         # Power capacity [MW]
         inputs['X_wind'] = 500.0  # wind farm
@@ -304,7 +305,10 @@ class ocaes:
         # ----------------
         # Objective
         # ----------------
-        model.objective = Objective(sense=maximize, rule=rules.objective)
+        if inputs['objective'] == 'COVE':
+            model.objective = Objective(sense=maximize, rule=rules.objective_COVE)
+        else: # REVENUE
+            model.objective = Objective(sense=maximize, rule=rules.objective_revenue)
 
         # ----------------
         # Run

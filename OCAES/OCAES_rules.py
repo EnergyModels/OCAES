@@ -143,6 +143,9 @@ def yearly_electricity_value(model):
 # ----------------
 # objective
 # ----------------
-def objective(model):  # Objective - maximize electricity value
-    # return model.yearly_revenue
+def objective_revenue(model):
+    return model.yearly_electricity_revenue
+
+
+def objective_COVE(model):
     return model.yearly_electricity_value
