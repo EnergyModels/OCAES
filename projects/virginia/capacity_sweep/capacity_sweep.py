@@ -20,6 +20,8 @@ def parameter_sweep(sweep_input):
     data = pd.read_csv(sweep_input['timeseries_filename'])
     model_inputs = ocaes.get_default_inputs()
 
+    model_inputs['objective'] = sweep_input['objective']
+
     # capacity inputs
     if sweep_input['scenario'] == 'wind_only':
         model_inputs['X_well'] = 0.0
@@ -94,19 +96,22 @@ if __name__ == '__main__':
                             'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
                             'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     capacities = np.arange(0, 501, 10)
+    objectives = ['REVENUE', 'COVE']
 
     # ------------------
     # create sweep_inputs dataframe
     # ------------------
     sweep_inputs = pd.DataFrame()
-    for timeseries_filename in timeseries_filenames:
-        for scenario, n_iterations in zip(scenarios, iterations):
-            df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
-            df_scenario.loc[:, 'scenario'] = scenario
-            df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
-            for capacity in capacities:
-                df_scenario.loc[:, 'capacity'] = capacity
-                sweep_inputs = sweep_inputs.append(df_scenario)
+    for objective in objectives:
+        for timeseries_filename in timeseries_filenames:
+            for scenario, n_iterations in zip(scenarios, iterations):
+                df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
+                df_scenario.loc[:, 'scenario'] = scenario
+                df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
+                df_scenario.loc[:, 'objective'] = objective
+                for capacity in capacities:
+                    df_scenario.loc[:, 'capacity'] = capacity
+                    sweep_inputs = sweep_inputs.append(df_scenario)
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
