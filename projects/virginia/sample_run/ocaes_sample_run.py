@@ -13,6 +13,7 @@ inputs['X_well'] = capacity
 inputs['X_cmp'] = capacity
 inputs['X_exp'] = capacity
 inputs['pwr2energy'] = duration
+# inputs['objective'] = 'COVE'
 model = ocaes(data, inputs)
 df, s = model.get_full_results()
 

@@ -186,8 +186,9 @@ class ocaes:
         model.E_well_min = Param(initialize=inputs['min_storage_fr'] * inputs['X_well'] * inputs[
             'pwr2energy'])  # minimum energy storage [MWh]
         model.E_well_max = Param(initialize=inputs['X_well'] * inputs['pwr2energy'])  # maximum energy storage [MWh]
-        model.E_well_init = Param(initialize=inputs['initial_storage_fr'] * inputs['X_well'] * inputs[
-            'pwr2energy'])  # Initial (and final) energy storage level [-]
+        model.E_well_duration = Param(initialize=inputs['pwr2energy'])
+        # model.E_well_init = Param(initialize=inputs['initial_storage_fr'] * inputs['X_well'] * inputs[
+        #     'pwr2energy'])  # Initial (and final) energy storage level [-]
         model.eta_storage_roundtrip = Param(initialize=inputs['eta_storage'])  # Storage round trip efficiency [-]
         model.eta_storage_single = Param(
             initialize=inputs['eta_storage'] ** 0.5)  # Storage single direction efficiency [-]
@@ -242,6 +243,7 @@ class ocaes:
 
         # Energy stored
         model.E_well = Var(model.t, within=NonNegativeReals, initialize=0.0)  # OCAES compressor power in (>0, MW)
+        model.E_well_init_fr = Var(within=NonNegativeReals, initialize=0.5)  # Inital energy storage fraction
 
         # Avoided emissions
         model.avoided_emissions = Var(within=Reals, initialize=0.0)  # within reservoir (>0, $)

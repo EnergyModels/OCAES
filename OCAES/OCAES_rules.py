@@ -55,7 +55,7 @@ def power_balance(model, t):
 # ----------------
 def energy_stored(model, t):
     if t == 1:
-        return model.E_well[t] == model.E_well_init
+        return model.E_well[t] == model.E_well_init_fr * model.X_well * model.E_well_duration
     else:
         return model.E_well[t] == model.E_well[t - 1] + \
                model.eta_storage_single * model.P_cmp[t] * model.delta_t - \
@@ -63,7 +63,7 @@ def energy_stored(model, t):
 
 
 def energy_stored_final(model):
-    return model.E_well[model.T - 1] == model.E_well_init
+    return model.E_well[model.T - 1] == model.E_well_init_fr * model.X_well * model.E_well_duration
 
 
 # ----------------
