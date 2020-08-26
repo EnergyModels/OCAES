@@ -28,9 +28,8 @@ class ocaes:
         inputs['X_exp'] = 500.0  # expander
 
         # Storage performance
-        inputs['pwr2energy'] = 10.0  # relation between power and energy [-]
+        inputs['pwr2energy'] = 10.0  # relation between power and energy (duration) [-]
         inputs['eta_storage'] = 0.75  # round trip efficiency [-]
-        inputs['initial_storage_fr'] = 0.5  # initial storage level, fraction of max [-]
         inputs['min_storage_fr'] = 0.0  # minimum storage level, fraction of max [-]
 
         # Capital costs [$/MW]
