@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='OCAES',
-      version='0.0.7',
+      version='0.0.8',
       description='Technoeconomic optimization of offshore compressed air energy storage (OCAES) systems',
       url='https://github.com/EnergyModels/OCAES',
       author='Jeff Bennett',
