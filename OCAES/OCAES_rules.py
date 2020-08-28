@@ -24,13 +24,16 @@ def pwr_grid_sell(model, t):
     return model.P_grid_sell[t] <= model.X_wind
 
 
-def pwr_grid_buy(model, t):
-    # return model.P_grid_buy[t] <= model.X_wind
-    return model.P_grid_buy[t] <= 0.0  # turned off arbitrage
-
-
 def pwr_grid_limit(model, t):
     return model.P_grid_sell[t] + model.P_grid_buy[t] <= model.X_wind
+
+
+def pwr_grid_buy_enabled(model, t):
+    return model.P_grid_buy[t] <= model.X_wind
+
+
+def pwr_grid_buy_disabled(model, t):
+    return model.P_grid_buy[t] <= 0.0  # turned off arbitrage
 
 
 # energy
