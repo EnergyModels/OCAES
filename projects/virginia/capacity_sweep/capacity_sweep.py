@@ -93,9 +93,10 @@ if __name__ == '__main__':
     iterations = [1, 1, 1,
                   1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
     ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
-    timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
-                            'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
-                            'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
+    # timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
+    #                         'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
+    #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
+    timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     capacities = np.arange(0, 501, 10)
     objectives = ['REVENUE', 'REVENUE', 'COVE']
     arbitrages = [False, True, False]
