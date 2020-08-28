@@ -19,8 +19,7 @@ class ocaes:
 
         inputs['debug'] = False  # debug
         inputs['delta_t'] = 1  # [hr]
-        inputs['objective'] = 'REVENUE'  # objective function, options are COVE or REVENUE
-        inputs['arbitrage'] = False      # option for energy arbitration, only valid with REVENUE objective
+        inputs['objective'] = 'REVENUE'  # objective function, options are COVE or REVENUE or REVENUE_ARBITRAGE
 
         # Power capacity [MW]
         inputs['X_wind'] = 500.0  # wind farm
@@ -273,7 +272,7 @@ class ocaes:
         model.cnst_pwr_capacity_well_out = Constraint(model.t, rule=rules.pwr_capacity_well_out)
         model.cnst_pwr_grid_sell = Constraint(model.t, rule=rules.pwr_grid_sell)
         model.cnst_pwr_grid_limit = Constraint(model.t, rule=rules.pwr_grid_limit)
-        if inputs['objective'] == 'REVENUE' and inputs['arbitrage']:
+        if inputs['objective'] == 'REVENUE_ARBITRAGE':
             model.cnst_pwr_grid_buy = Constraint(model.t, rule=rules.pwr_grid_buy_enabled)
         else:
             model.cnst_pwr_grid_buy = Constraint(model.t, rule=rules.pwr_grid_buy_disabled)
@@ -312,7 +311,7 @@ class ocaes:
         # ----------------
         if inputs['objective'] == 'COVE':
             model.objective = Objective(sense=maximize, rule=rules.objective_COVE)
-        else: # REVENUE
+        else: # REVENUE or REVENUE_ARBITRAGE
             model.objective = Objective(sense=maximize, rule=rules.objective_revenue)
 
         # ----------------

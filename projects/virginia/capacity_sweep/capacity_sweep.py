@@ -21,7 +21,6 @@ def parameter_sweep(sweep_input):
     model_inputs = ocaes.get_default_inputs()
 
     model_inputs['objective'] = sweep_input['objective']
-    model_inputs['arbitrage'] = sweep_input['arbitrage']
 
     # capacity inputs
     if sweep_input['scenario'] == 'wind_only':
@@ -98,25 +97,23 @@ if __name__ == '__main__':
     #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     capacities = np.arange(0, 501, 10)
-    objectives = ['REVENUE', 'REVENUE', 'COVE']
-    arbitrages = [False, True, False]
+    objectives = ['REVENUE', 'REVENUE_ARBITRAGE', 'COVE']
 
     # ------------------
     # create sweep_inputs dataframe
     # ------------------
     sweep_inputs = pd.DataFrame()
     for objective in objectives:
-        for arbitrage in arbitrages:
-            for timeseries_filename in timeseries_filenames:
-                for scenario, n_iterations in zip(scenarios, iterations):
-                    df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
-                    df_scenario.loc[:, 'scenario'] = scenario
-                    df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
-                    df_scenario.loc[:, 'objective'] = objective
-                    df_scenario.loc[:, 'arbitrage'] = arbitrage
-                    for capacity in capacities:
-                        df_scenario.loc[:, 'capacity'] = capacity
-                        sweep_inputs = sweep_inputs.append(df_scenario)
+        for timeseries_filename in timeseries_filenames:
+            for scenario, n_iterations in zip(scenarios, iterations):
+                df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
+                df_scenario.loc[:, 'scenario'] = scenario
+                df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
+                df_scenario.loc[:, 'objective'] = objective
+                df_scenario.loc[:, 'arbitrage'] = arbitrage
+                for capacity in capacities:
+                    df_scenario.loc[:, 'capacity'] = capacity
+                    sweep_inputs = sweep_inputs.append(df_scenario)
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
