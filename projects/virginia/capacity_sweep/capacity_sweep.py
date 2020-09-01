@@ -110,7 +110,6 @@ if __name__ == '__main__':
                 df_scenario.loc[:, 'scenario'] = scenario
                 df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
                 df_scenario.loc[:, 'objective'] = objective
-                df_scenario.loc[:, 'arbitrage'] = arbitrage
                 for capacity in capacities:
                     df_scenario.loc[:, 'capacity'] = capacity
                     sweep_inputs = sweep_inputs.append(df_scenario)
