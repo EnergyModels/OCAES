@@ -97,7 +97,7 @@ if __name__ == '__main__':
     #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     capacities = np.arange(0, 501, 10)
-    objectives = ['REVENUE', 'REVENUE_ARBITRAGE', 'COVE']
+    objectives = ['COVE', 'PROFIT', 'CONST_DISPATCH']
 
     # ------------------
     # create sweep_inputs dataframe

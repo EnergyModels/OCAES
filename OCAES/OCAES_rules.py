@@ -36,6 +36,10 @@ def pwr_grid_buy_disabled(model, t):
     return model.P_grid_buy[t] <= 0.0  # turned off arbitrage
 
 
+def pwr_dispatch_const(model, t):
+    return model.P_grid_sell[t] == model.X_dispatch  # turned off arbitrage
+
+
 # energy
 def energy_capacity_well_min(model, t):
     return model.E_well_min <= model.E_well[t]
@@ -152,3 +156,7 @@ def objective_revenue(model):
 
 def objective_COVE(model):
     return model.yearly_electricity_value
+
+
+def objective_PROFIT(model):
+    return model.yearly_profit

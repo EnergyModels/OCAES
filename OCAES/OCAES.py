@@ -19,7 +19,8 @@ class ocaes:
 
         inputs['debug'] = False  # debug
         inputs['delta_t'] = 1  # [hr]
-        inputs['objective'] = 'REVENUE'  # objective function, options are COVE or REVENUE or REVENUE_ARBITRAGE
+        inputs['objective'] = 'REVENUE'  # objective function
+        # options are COVE, REVENUE, REVENUE_ARBITRAGE, PROFIT, or CONST_DISPATCH
 
         # Power capacity [MW]
         inputs['X_wind'] = 500.0  # wind farm
@@ -248,7 +249,6 @@ class ocaes:
         model.avoided_emissions = Var(within=Reals, initialize=0.0)  # within reservoir (>0, $)
 
         # electricity (delivered to the grid)
-        # model.total_electricity = Var(within=Reals, initialize=0.0)  # total
         model.yearly_electricity = Var(within=Reals, initialize=0.0)  # scaled for one year
 
         # Economics
@@ -261,6 +261,10 @@ class ocaes:
 
         # COVE
         model.yearly_electricity_value = Var(within=Reals, initialize=0.0)
+
+        # Constant dispatch
+        if inputs['objective'] == 'CONST_DISPATCH':
+            model.X_dispatch = Var(within=NonNegativeReals, initialize=inputs['X_well'])  # MW of constant dispatch
 
         # ----------------
         # Constraints (prefixed with cnst)
@@ -306,12 +310,18 @@ class ocaes:
         # COVE
         model.cnst_yearly_electricity_value = Constraint(rule=rules.yearly_electricity_value)
 
+        # Constant Dispatch
+        if inputs['objective'] == 'CONST_DISPATCH':
+            model.cnst_pwr_dispatch_const = Constraint(model.t, rule=rules.pwr_dispatch_const)
+
         # ----------------
         # Objective
         # ----------------
         if inputs['objective'] == 'COVE':
             model.objective = Objective(sense=maximize, rule=rules.objective_COVE)
-        else: # REVENUE or REVENUE_ARBITRAGE
+        elif inputs['objective'] == 'PROFIT' or inputs['objective'] == 'CONST_DISPATCH':
+            model.objective = Objective(sense=maximize, rule=rules.objective_PROFIT)
+        else:  # REVENUE, REVENUE_ARBITRAGE or CONST_DISPATCH
             model.objective = Objective(sense=maximize, rule=rules.objective_revenue)
 
         # ----------------

@@ -22,6 +22,9 @@ series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_b
 # Import results
 df = pd.read_csv(results_filename)
 
+
+df = df.loc[df.loc[:, 'objective'] == 'COVE']
+
 # create dataframe to hold results summary
 df_smry = pd.DataFrame()
 
