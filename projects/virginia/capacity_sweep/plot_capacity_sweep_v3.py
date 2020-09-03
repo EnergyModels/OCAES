@@ -17,10 +17,10 @@ x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0, 1.0]
 x_limits = [[], []]
 
-y_vars_all = ["revenue", "LCOE", "COVE", "avoided_emissions"]
-y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)", "Avoided emissions\n(t/MWh)"]
+y_vars_all = ["revenue", "LCOE", "COVE", "ROI"]
+y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)", "Return on Investment\n(-)"]
 y_converts_all = [1.0, 1.0, 1.0, 1.0]
-y_limits_all = [[], [], [0.08, 0.12], [0.4,0.5]]
+y_limits_all = [[], [], [], []]
 
 series_var = 'scenario'
 series = ['wind_only', '4_hr_batt', '10_hr_batt',
@@ -42,12 +42,16 @@ linestyles = ['solid', 'solid', 'solid',
               'dashed', 'dotted', 'solid','solid','solid']
 markers = ['o', 's', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
 
+
+
 # =====================================
 # process data
 # =====================================
 
 # Import results
 df = pd.read_csv(results_filename)
+
+df.loc[:,'ROI'] = df.loc[:,'yearly_total_revenue_dollars'] /df.loc[:,'yearly_costs_dollars']
 
 for timeseries_filename in df.timeseries_filename.unique():
     for objective in df.objective.unique():

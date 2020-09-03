@@ -391,7 +391,8 @@ class ocaes:
         LCOE = s['yearly_costs'] / s['yearly_electricity'] * 1e-3  # $/kWh
         COVE = s['yearly_costs'] / s['yearly_electricity_value'] * 1e-3  # $/kWh
         avoided_emissions = s['avoided_emissions'] / s['yearly_electricity']  # ton/MWh
-        return revenue, LCOE, COVE, avoided_emissions
+        ROI = s['yearly_total_revenue'] / s['yearly_costs']
+        return revenue, LCOE, COVE, avoided_emissions, ROI
 
     def plot_overview(self, start=1, stop=168, dpi=300, savename='results_overview'):
         # get results

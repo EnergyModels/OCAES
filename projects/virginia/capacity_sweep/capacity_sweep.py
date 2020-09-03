@@ -51,7 +51,7 @@ def parameter_sweep(sweep_input):
     # run model
     model = ocaes(data, model_inputs)
     df, s = model.get_full_results()
-    revenue, LCOE, COVE, avoided_emissions = model.post_process(s)
+    revenue, LCOE, COVE, avoided_emissions, ROI = model.post_process(s)
 
     # save results
     results = pd.Series(index=('revenue', 'LCOE', 'COVE', 'avoided_emissions', 'solve_time'), dtype='float64')
@@ -59,6 +59,7 @@ def parameter_sweep(sweep_input):
     results['LCOE'] = LCOE
     results['COVE'] = COVE
     results['avoided_emissions'] = avoided_emissions
+    results['ROI'] = ROI
     results['solve_time'] = time.time() - t0
     # additional outputs
     results['avoided_emissions_tonnes'] = s['avoided_emissions']
