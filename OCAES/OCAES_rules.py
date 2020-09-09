@@ -1,3 +1,25 @@
+from pyomo.environ import *
+
+
+def pwr_wind(model, t):
+    return model.P_wind[t] == model.X_wind * model.P_wind_fr[t]
+
+
+# ----------------
+# Variable capacities - X_wind and X_storage are optimized variables
+# ----------------
+def capacity_well_var(model):
+    return model.X_well == model.X_storage
+
+
+def capacity_cmp_var(model):
+    return model.X_cmp == model.X_storage
+
+
+def capacity_exp_var(model):
+    return model.X_exp == model.X_storage
+
+
 # ----------------
 # capacity constraints
 # ----------------
@@ -37,16 +59,16 @@ def pwr_grid_buy_disabled(model, t):
 
 
 def pwr_dispatch_const(model, t):
-    return model.P_grid_sell[t] == model.X_dispatch  # turned off arbitrage
+    return model.P_grid_sell[t] == model.X_dispatch
 
 
 # energy
 def energy_capacity_well_min(model, t):
-    return model.E_well_min <= model.E_well[t]
+    return model.E_well_min_fr * model.E_well_duration * model.X_well <= model.E_well[t]
 
 
 def energy_capacity_well_max(model, t):
-    return model.E_well[t] <= model.E_well_max
+    return model.E_well[t] <= model.E_well_max_fr * model.E_well_duration * model.X_well
 
 
 # ----------------
@@ -60,9 +82,13 @@ def power_balance(model, t):
 # ----------------
 # energy stored
 # ----------------
+def energy_stored_init(model):
+    return model.E_well_init == value(model.X_well) * model.E_well_init_fr * model.E_well_duration
+
+
 def energy_stored(model, t):
     if t == 1:
-        return model.E_well[t] == model.E_well_init_fr * model.X_well * model.E_well_duration
+        return model.E_well[t] == model.E_well_init
     else:
         return model.E_well[t] == model.E_well[t - 1] + \
                model.eta_storage_single * model.P_cmp[t] * model.delta_t - \
@@ -70,7 +96,7 @@ def energy_stored(model, t):
 
 
 def energy_stored_final(model):
-    return model.E_well[model.T - 1] == model.E_well_init_fr * model.X_well * model.E_well_duration
+    return model.E_well[model.T - 1] == model.E_well_init
 
 
 # ----------------
@@ -108,8 +134,7 @@ def yearly_electricity_revenue(model):
 
 
 def yearly_capacity_credit(model):
-    return model.yearly_capacity_credit == model.CC_value * 365 * \
-           min(model.X_wind, model.CC_wind * model.X_wind + model.CC_exp * model.X_exp)
+    return model.yearly_capacity_credit == model.CC_value * 365 * model.X_wind * model.CC_wind + model.X_exp * model.CC_exp
 
 
 def yearly_total_revenue(model):

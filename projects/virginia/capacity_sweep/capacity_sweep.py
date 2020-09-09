@@ -32,6 +32,9 @@ def parameter_sweep(sweep_input):
         model_inputs['X_cmp'] = sweep_input['capacity']
         model_inputs['X_exp'] = sweep_input['capacity']
 
+    if model_inputs['objective'] == 'CONST_DISPATCH':
+        model_inputs['X_dispatch'] = sweep_input['capacity']
+
     # scenario specific inputs
     model_inputs['pwr2energy'] = sweep_input['pwr2energy']
     model_inputs['eta_storage'] = sweep_input['eta_storage']
@@ -107,13 +110,14 @@ if __name__ == '__main__':
     for objective in objectives:
         for timeseries_filename in timeseries_filenames:
             for scenario, n_iterations in zip(scenarios, iterations):
-                df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
-                df_scenario.loc[:, 'scenario'] = scenario
-                df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
-                df_scenario.loc[:, 'objective'] = objective
-                for capacity in capacities:
-                    df_scenario.loc[:, 'capacity'] = capacity
-                    sweep_inputs = sweep_inputs.append(df_scenario)
+                if not (scenario == 'wind_only' and objective == 'CONST_DISPATCH'):
+                    df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
+                    df_scenario.loc[:, 'scenario'] = scenario
+                    df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
+                    df_scenario.loc[:, 'objective'] = objective
+                    for capacity in capacities:
+                        df_scenario.loc[:, 'capacity'] = capacity
+                        sweep_inputs = sweep_inputs.append(df_scenario)
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
