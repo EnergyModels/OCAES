@@ -68,6 +68,13 @@ for timeseries_filename in df.timeseries_filename.unique():
         y_converts = y_converts_all[0:n]
         y_limits = y_limits_all[0:n]
 
+        if objective == 'CONST_DISPATCH':
+            series = ['4_hr_batt', '10_hr_batt',
+                      '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']
+
+        else:
+            series = ['wind_only', '4_hr_batt', '10_hr_batt',
+                      '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']
         # =====================================
         # create plots
         # =====================================

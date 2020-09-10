@@ -266,8 +266,10 @@ class ocaes:
         # Avoided emissions
         model.avoided_emissions = Var(within=Reals, initialize=0.0)  # within reservoir (>0, $)
 
-        # electricity (delivered to the grid)
+        # electricity (delivered to the grid and generated)
         model.yearly_electricity = Var(within=Reals, initialize=0.0)  # scaled for one year
+        model.yearly_electricity_generated = Var(within=Reals, initialize=0.0)  # scaled for one year
+        model.yearly_curtailment = Var(within=Reals, initialize=0.0)  # scaled for one year
 
         # Economics
         model.electricity_revenue = Var(model.t, within=Reals, initialize=0.0)
@@ -321,6 +323,8 @@ class ocaes:
 
         # electricity
         model.cnst_yearly_electricity = Constraint(rule=rules.yearly_electricity)
+        model.cnst_yearly_electricity_generated = Constraint(rule=rules.yearly_electricity_generated)
+        model.cnst_yearly_curtailment = Constraint(rule=rules.yearly_curtailment)
 
         # economics
         model.cnst_electricity_revenue = Constraint(model.t, rule=rules.electricity_revenue)

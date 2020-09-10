@@ -67,6 +67,9 @@ def parameter_sweep(sweep_input):
     # additional outputs
     results['avoided_emissions_tonnes'] = s['avoided_emissions']
     results['yearly_electricity_MWh'] = s['yearly_electricity']
+    results['yearly_electricity_generated_MWh'] = s['yearly_electricity_generated']
+    results['yearly_curtailment_MWh'] = s['yearly_curtailment']
+    results['yearly_curtailment_fr'] = s['yearly_curtailment'] / s['yearly_electricity_generated']
     results['yearly_electricity_revenue_dollars'] = s['yearly_electricity_revenue']
     results['yearly_capacity_credit_dollars'] = s['yearly_capacity_credit']
     results['yearly_total_revenue_dollars'] = s['yearly_total_revenue']
@@ -74,6 +77,15 @@ def parameter_sweep(sweep_input):
     results['yearly_profit_dollars'] = s['yearly_profit']
     results['yearly_electricity_value_dollars'] = s['yearly_electricity_value']
     results['price_grid_average_dollarsPerMWh'] = s['price_grid_average']
+
+    results['X_wind'] = s['X_wind']
+    results['X_well'] = s['X_well']
+    results['X_exp'] = s['X_exp']
+    results['X_cmp'] = s['X_cmp']
+    results['X_dispatch'] = s['X_dispatch']
+    results['storage_duration_hrs'] = s['E_well_duration']
+    results['E_well_init_fr'] = s['E_well_init_fr']
+    results['E_well_init'] = s['E_well_init']
 
     # combine inputs and results to return in single series
     single_output = pd.concat([sweep_input, results])
@@ -100,7 +112,7 @@ if __name__ == '__main__':
     #                         'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
     #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    capacities = np.arange(0, 501, 10)
+    capacities = np.arange(0.0, 501, 10)
     objectives = ['COVE', 'PROFIT', 'CONST_DISPATCH']
 
     # ------------------
