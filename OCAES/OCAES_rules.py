@@ -193,3 +193,7 @@ def objective_COVE(model):
 
 def objective_PROFIT(model):
     return model.yearly_profit
+
+
+def objective_COST(model):
+    return model.yearly_costs

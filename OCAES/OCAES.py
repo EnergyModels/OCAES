@@ -346,8 +346,10 @@ class ocaes:
         # ----------------
         if inputs['objective'] == 'COVE':
             model.objective = Objective(sense=maximize, rule=rules.objective_COVE)
-        elif inputs['objective'] == 'PROFIT' or inputs['objective'] == 'CONST_DISPATCH':
+        elif inputs['objective'] == 'PROFIT':
             model.objective = Objective(sense=maximize, rule=rules.objective_PROFIT)
+        elif inputs['objective'] == 'CONST_DISPATCH':
+            model.objective = Objective(sense=minimize, rule=rules.objective_COST)
         else:  # REVENUE, REVENUE_ARBITRAGE or CONST_DISPATCH
             model.objective = Objective(sense=maximize, rule=rules.objective_revenue)
 
