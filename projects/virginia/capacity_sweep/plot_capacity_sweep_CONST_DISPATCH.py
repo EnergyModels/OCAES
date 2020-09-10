@@ -13,36 +13,29 @@ results_filename = "sweep_results.csv"
 DPI = 600  # Set resolution for saving figures
 
 x_vars = ["capacity"]
-x_labels = ["Storage power rating (MW)"]
-x_converts = [1.0, 1.0]
-x_limits = [[], []]
+x_labels = ["Dispatch power (MW)"]
+x_converts = [1.0]
+x_limits = [[0.0, 200.0]]
 
-y_vars_all = ["revenue", "LCOE", "COVE", "ROI"]
-y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)", "Return on Investment\n(-)"]
-y_converts_all = [1.0, 1.0, 1.0, 1.0]
+y_vars_all = ["LCOE", "X_wind", "X_exp", "yearly_curtailment_fr"]
+y_labels_all = ["LCOE\n($/kWh)",  "Wind\n(MW)", "Storage\n(MW)", "Curtailment\n(-)"]
+y_converts_all = [1.0,  1.0, 1.0, 1.0]
 y_limits_all = [[], [], [], []]
 
 series_var = 'scenario'
-series = ['wind_only', '4_hr_batt', '10_hr_batt',
-          '10_hr_ocaes', '24_hr_ocaes','48_hr_ocaes', '72_hr_ocaes','168_hr_ocaes']
-series = ['wind_only', '4_hr_batt', '10_hr_batt',
-          '10_hr_ocaes', '24_hr_ocaes','168_hr_ocaes']
+series = ['4_hr_batt', '10_hr_batt',
+          '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']
 series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_batt': 'Battery (10 hr)',
                '10_hr_ocaes': 'OCAES (10 hr)', '24_hr_ocaes': 'OCAES (24 hr)',
-               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)','168_hr_ocaes': 'OCAES (168 hr)'}
+               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)', '168_hr_ocaes': 'OCAES (168 hr)'}
 
 # Set Color Palette
-# colors = sns.color_palette("Paired")
-# colors = [(0, 0, 0), colors[0], colors[1], colors[2], colors[3]]
-
 colors = sns.color_palette("colorblind")
-colors = [(0, 0, 0), colors[0], colors[5],
-          colors[2], colors[1], colors[3],colors[4],colors[6]]  # black, blue, brown, green, orange
-linestyles = ['solid', 'solid', 'solid',
-              'dashed', 'dotted', 'solid','solid','solid']
-markers = ['o', 's', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
-
-
+colors = [colors[0], colors[5],
+          colors[2], colors[1], colors[3], colors[4], colors[6]]  # black, blue, brown, green, orange
+linestyles = ['solid', 'solid',
+              'dashed', 'dotted', 'solid', 'solid', 'solid']
+markers = ['s', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
 
 # =====================================
 # process data
@@ -51,30 +44,33 @@ markers = ['o', 's', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h',
 # Import results
 df = pd.read_csv(results_filename)
 
-df.loc[:,'ROI'] = df.loc[:,'yearly_total_revenue_dollars'] /df.loc[:,'yearly_costs_dollars']
+# Only select results with CONST_DISPATCH objective
+objective = 'CONST_DISPATCH'
+df = df[df.loc[:, "objective"] == objective]
 
-for timeseries_filename in df.timeseries_filename.unique():
-    for objective in df.objective.unique():
+for v in range(2):
+    # variable selection
 
-        # name for saving results
-        savename = timeseries_filename[:str.find(timeseries_filename, '.')]
-        savename = savename + '_' + str(objective) + '.png'
-        print(savename)
-
-        # variable selection
+    if v == 0:
         n = len(y_vars_all)
         y_vars = y_vars_all[0:n]
         y_labels = y_labels_all[0:n]
         y_converts = y_converts_all[0:n]
         y_limits = y_limits_all[0:n]
+    elif v == 1:
+        n = 2
+        y_vars = y_vars_all[0:n]
+        y_labels = y_labels_all[0:n]
+        y_converts = y_converts_all[0:n]
+        y_limits = y_limits_all[0:n]
 
-        if objective == 'CONST_DISPATCH':
-            series = ['4_hr_batt', '10_hr_batt',
-                      '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']
+    for timeseries_filename in df.timeseries_filename.unique():
 
-        else:
-            series = ['wind_only', '4_hr_batt', '10_hr_batt',
-                      '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']
+        # name for saving results
+        savename = timeseries_filename[:str.find(timeseries_filename, '.')]
+        savename = savename + '_' + str(objective) + str(v) + '.png'
+        print(savename)
+
         # =====================================
         # create plots
         # =====================================
@@ -145,15 +141,15 @@ for timeseries_filename in df.timeseries_filename.unique():
                 sns.despine(ax=ax, )
                 ax.tick_params(top=False, right=False)
 
-        # Axes limits
-        if len(y_limit)==2:
-            ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
+                # Axes limits
+                if len(y_limit) == 2:
+                    ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
 
-        # Caption labels
-        caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-        plt.text(-0.1, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
-                 transform=ax.transAxes, fontsize='medium', fontweight='bold')
-        count = count + 1
+                # Caption labels
+                caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
+                plt.text(-0.1, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+                         transform=ax.transAxes, fontsize='medium', fontweight='bold')
+                count = count + 1
 
         # Legend
         # y_pos = j / 2 + 0.5
