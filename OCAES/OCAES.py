@@ -20,9 +20,13 @@ class ocaes:
         inputs['debug'] = False  # debug
         inputs['delta_t'] = 1  # [hr]
         inputs['objective'] = 'REVENUE'  # objective function
-        # options are COVE, REVENUE, REVENUE_ARBITRAGE, PROFIT, CONST_DISPATCH_OPT or CONST_DISPATCH_FIX
-        # CONST_DISPATCH_OPT - constant dispatch while optimizing wind and storage capacities
-        # CONST_DISPATCH_FIX - constant dispatch with specified wind and storage capacities
+        # options are COVE, REVENUE, REVENUE_ARBITRAGE, PROFIT,
+        # CONST_DISPATCH, CONST_DISPATCH_FIX, or CONST_DISPATCH_FIX_STOR
+
+        # Constant dispatch - power output is held constant for entire time series
+        # CONST_DISPATCH - wind and storage capacities optimized (variable)
+        # CONST_DISPATCH_FIX - wind and stoarge capacities are fixed
+        # CONST_DISPATCH_FIX_STOR - storage capacity is fixed, wind is variable
 
         # Power capacity [MW]
         inputs['X_wind'] = 500.0  # wind farm
@@ -144,7 +148,7 @@ class ocaes:
         data.loc[:, 'R'] = data.price_dollarsPerMWh / data.price_dollarsPerMWh.mean()  # normalized price
         # data.loc[:, 'D'] = data.generation_MW / data.generation_MW.mean() # normalized demand
         # data.loc[:, 'R'] = (
-        #         data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
+        # data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
         # data.loc[:, 'Q'] = data.VRE_MW / data.generation_MW.mean() # normalized VRE production
 
         # ================================
@@ -179,20 +183,27 @@ class ocaes:
         model.delta_t = Param(initialize=inputs['delta_t'])  # time step [hr]
         model.T = Param(initialize=T)  # number of time steps
 
-        # power capacity [MW]
-        # model.X_wind = Param(initialize=float(inputs['X_wind']))
-        # model.X_well = Param(initialize=float(inputs['X_well']))
-        # model.X_cmp = Param(initialize=float(inputs['X_cmp']))
-        # model.X_exp = Param(initialize=float(inputs['X_exp']))
-        model.X_dispatch = Param(initialize=float(inputs['X_dispatch']))
+        # power capacity - wind [MW]
+        if not(inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
+            model.X_wind = Param(initialize=inputs['X_wind'])
+
+        # power capacity -storage [MW]
+        if not(inputs['objective'] == 'CONST_DISPATCH'):
+            model.X_well = Param(initialize=inputs['X_well'])
+            model.X_cmp = Param(initialize=inputs['X_cmp'])
+            model.X_exp = Param(initialize=inputs['X_exp'])
+            model.X_storage = Param(initialize=inputs['X_exp'])
+
+        # power capacity - dispatch [MW]
+        if not(inputs['objective'] == 'CONST_DISPATCH_FIX' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
+            model.X_dispatch = Param(initialize=float(inputs['X_dispatch']))
 
         # storage performance
         model.E_well_duration = Param(initialize=float(inputs['pwr2energy']))
         model.E_well_min_fr = Param(initialize=float(inputs['min_storage_fr']))  # minimum energy storage fraction [MWh]
         model.E_well_max_fr = Param(initialize=1.0)  # maximum energy storage fraction [MWh]
         model.eta_storage_roundtrip = Param(initialize=inputs['eta_storage'])  # Storage round trip efficiency [-]
-        model.eta_storage_single = Param(
-            initialize=inputs['eta_storage'] ** 0.5)  # Storage single direction efficiency [-]
+        model.eta_storage_single = Param(initialize=inputs['eta_storage'] ** 0.5)  # Storage single direction eff. [-]
 
         # capital costs [$/MW]
         model.C_wind = Param(initialize=float(inputs['C_wind']))
@@ -235,24 +246,19 @@ class ocaes:
         # ----------------
         # Variables (upper case)
         # ----------------
-        # power capacity [MW]
-        if inputs['objective'] == 'CONST_DISPATCH_OPT':
+        # power capacity - wind [MW]
+        if inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
             model.X_wind = Var(within=NonNegativeReals, initialize=float(inputs['X_wind']))
+
+        # power capacity -storage [MW]
+        if inputs['objective'] == 'CONST_DISPATCH':
             model.X_well = Var(within=NonNegativeReals, initialize=float(inputs['X_well']))
             model.X_cmp = Var(within=NonNegativeReals, initialize=float(inputs['X_cmp']))
             model.X_exp = Var(within=NonNegativeReals, initialize=float(inputs['X_exp']))
             model.X_storage = Var(within=NonNegativeReals, initialize=float(inputs['X_exp']))
-            model.X_dispatch = Var(within=NonNegativeReals, initialize=float(inputs['X_dispatch']),
-                               bounds=(float(inputs['X_dispatch']), float(inputs['X_dispatch'])))
-        else:
-            model.X_wind = Var(within=NonNegativeReals, initialize=float(inputs['X_wind']),
-                               bounds=(float(inputs['X_wind']), float(inputs['X_wind'])))
-            model.X_well = Var(within=NonNegativeReals, initialize=float(inputs['X_well']),
-                               bounds=(float(inputs['X_well']), float(inputs['X_well'])))
-            model.X_cmp = Var(within=NonNegativeReals, initialize=float(inputs['X_cmp']),
-                              bounds=(float(inputs['X_cmp']), float(inputs['X_cmp'])))
-            model.X_exp = Var(within=NonNegativeReals, initialize=float(inputs['X_exp']),
-                              bounds=(float(inputs['X_exp']), float(inputs['X_exp'])))
+
+        # power capacity - dispatch [MW]
+        if inputs['objective'] == 'CONST_DISPATCH_FIX' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
             model.X_dispatch = Var(within=NonNegativeReals, initialize=float(inputs['X_dispatch']))
 
         # Decision variables - energy flows
@@ -265,7 +271,8 @@ class ocaes:
 
         # Energy stored
         model.E_well = Var(model.t, within=NonNegativeReals, initialize=0.0)  # OCAES compressor power in (>0, MW)
-        model.E_well_init_fr = Var(within=NonNegativeReals, initialize=0.5, bounds=(0.0, 1.0))  # Initial energy storage fraction
+        model.E_well_init_fr = Var(within=NonNegativeReals, initialize=0.5,
+                                   bounds=(0.0, 1.0))  # Initial energy storage fraction
         model.E_well_init = Var(within=NonNegativeReals, initialize=0.0)  # Initial energy storage (MWh)
 
         # Avoided emissions
@@ -294,7 +301,7 @@ class ocaes:
         model.cnst_pwr_wind = Constraint(model.t, rule=rules.pwr_wind)
 
         # capacity
-        if inputs['objective'] == 'CONST_DISPATCH_OPT':
+        if inputs['objective'] == 'CONST_DISPATCH':
             model.cnst_cap_well_var = Constraint(rule=rules.capacity_well_var)
             model.cnst_cap_cmp_var = Constraint(rule=rules.capacity_cmp_var)
             model.cnst_cap_exp_var = Constraint(rule=rules.capacity_exp_var)
@@ -334,7 +341,11 @@ class ocaes:
         # economics
         model.cnst_electricity_revenue = Constraint(model.t, rule=rules.electricity_revenue)
         model.cnst_yearly_electricity_revenue = Constraint(rule=rules.yearly_electricity_revenue)
-        model.cnst_yearly_capacity_credit = Constraint(rule=rules.yearly_capacity_credit)
+        if inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX' or \
+                inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
+            model.cnst_yearly_capacity_credit_simple = Constraint(rule=rules.yearly_capacity_credit_simple)
+        else:
+            model.cnst_yearly_capacity_credit = Constraint(rule=rules.yearly_capacity_credit)
         model.cnst_yearly_total_revenue = Constraint(rule=rules.yearly_total_revenue)
         model.cnst_yearly_costs = Constraint(rule=rules.yearly_costs)
         model.cnst_yearly_profit = Constraint(rule=rules.yearly_profit)
@@ -343,7 +354,8 @@ class ocaes:
         model.cnst_yearly_electricity_value = Constraint(rule=rules.yearly_electricity_value)
 
         # Constant Dispatch
-        if inputs['objective'] == 'CONST_DISPATCH_OPT' or inputs['objective'] == 'CONST_DISPATCH_FIX':
+        if inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX' or \
+                inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
             model.cnst_pwr_dispatch_const = Constraint(model.t, rule=rules.pwr_dispatch_const)
 
         # ----------------
@@ -353,7 +365,7 @@ class ocaes:
             model.objective = Objective(sense=maximize, rule=rules.objective_COVE)
         elif inputs['objective'] == 'PROFIT':
             model.objective = Objective(sense=maximize, rule=rules.objective_PROFIT)
-        elif inputs['objective'] == 'CONST_DISPATCH_OPT':
+        elif inputs['objective'] == 'CONST_DISPATCH':# or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
             model.objective = Objective(sense=minimize, rule=rules.objective_COST)
         else:  # REVENUE, REVENUE_ARBITRAGE or CONST_DISPATCH_FIX
             model.objective = Objective(sense=maximize, rule=rules.objective_revenue)

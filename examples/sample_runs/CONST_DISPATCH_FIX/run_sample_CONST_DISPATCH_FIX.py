@@ -11,7 +11,7 @@ data = pd.read_csv('timeseries_inputs_2019_72_hours.csv')
 inputs = ocaes.get_default_inputs()
 inputs['X_dispatch'] = dispatch
 inputs['pwr2energy'] = duration
-inputs['objective'] = 'CONST_DISPATCH'
+inputs['objective'] = 'CONST_DISPATCH_FIX'
 model = ocaes(data, inputs)
 df, s = model.get_full_results()
 

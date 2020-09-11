@@ -142,7 +142,11 @@ def yearly_electricity_revenue(model):
 
 
 def yearly_capacity_credit(model):
-    return model.yearly_capacity_credit == model.CC_value * 365 * model.X_wind * model.CC_wind + model.X_exp * model.CC_exp
+    return model.yearly_capacity_credit == model.CC_value * 365 * min(model.X_wind, model.X_wind * model.CC_wind + model.X_exp * model.CC_exp)
+
+
+def yearly_capacity_credit_simple(model):
+    return model.yearly_capacity_credit == model.CC_value * 365 * (model.X_wind * model.CC_wind + model.X_exp * model.CC_exp)
 
 
 def yearly_total_revenue(model):
