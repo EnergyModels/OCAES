@@ -160,6 +160,10 @@ class ocaes:
         price_dict = {i: data.price_dollarsPerMWh[i - 1] for i in range(1, T)}  # electricity price in $/MWh
         emissions_dict = {i: data.emissions_tonCO2PerMWh[i - 1] for i in range(1, T)}  # emissions [ton/MWh]
 
+        # Constraints do not work if the RTE<=0
+        if inputs['eta_storage'] <= 0.0:
+            inputs['eta_storage'] = 0.01  # Replace with a very low efficiency
+
         # ================================
         # Create Pyomo model
         # ================================
@@ -184,18 +188,18 @@ class ocaes:
         model.T = Param(initialize=T)  # number of time steps
 
         # power capacity - wind [MW]
-        if not(inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
+        if not (inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
             model.X_wind = Param(initialize=float(inputs['X_wind']))
 
         # power capacity -storage [MW]
-        if not(inputs['objective'] == 'CONST_DISPATCH'):
+        if not (inputs['objective'] == 'CONST_DISPATCH'):
             model.X_well = Param(initialize=float(inputs['X_well']))
             model.X_cmp = Param(initialize=float(inputs['X_cmp']))
             model.X_exp = Param(initialize=float(inputs['X_exp']))
             model.X_storage = Param(initialize=float(inputs['X_exp']))
 
         # power capacity - dispatch [MW]
-        if not(inputs['objective'] == 'CONST_DISPATCH_FIX' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
+        if not (inputs['objective'] == 'CONST_DISPATCH_FIX' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
             model.X_dispatch = Param(initialize=float(inputs['X_dispatch']))
 
         # storage performance
@@ -365,7 +369,7 @@ class ocaes:
             model.objective = Objective(sense=maximize, rule=rules.objective_COVE)
         elif inputs['objective'] == 'PROFIT':
             model.objective = Objective(sense=maximize, rule=rules.objective_PROFIT)
-        elif inputs['objective'] == 'CONST_DISPATCH':# or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
+        elif inputs['objective'] == 'CONST_DISPATCH':  # or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
             model.objective = Objective(sense=minimize, rule=rules.objective_COST)
         else:  # REVENUE, REVENUE_ARBITRAGE or CONST_DISPATCH_FIX
             model.objective = Objective(sense=maximize, rule=rules.objective_revenue)

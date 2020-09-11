@@ -22,19 +22,6 @@ def parameter_sweep(sweep_input):
 
     model_inputs['objective'] = sweep_input['objective']
 
-    # capacity inputs
-    if sweep_input['scenario'] == 'wind_only':
-        model_inputs['X_well'] = 0.0
-        model_inputs['X_cmp'] = 0.0
-        model_inputs['X_exp'] = 0.0
-    else:
-        model_inputs['X_well'] = sweep_input['capacity']
-        model_inputs['X_cmp'] = sweep_input['capacity']
-        model_inputs['X_exp'] = sweep_input['capacity']
-
-    if model_inputs['objective'] == 'CONST_DISPATCH_OPT':
-        model_inputs['X_dispatch'] = sweep_input['capacity']
-
     # scenario specific inputs
     model_inputs['pwr2energy'] = sweep_input['pwr2energy']
     model_inputs['eta_storage'] = sweep_input['eta_storage']
@@ -50,6 +37,22 @@ def parameter_sweep(sweep_input):
     model_inputs['L_well'] = sweep_input['L_well']
     model_inputs['L_cmp'] = sweep_input['L_cmp']
     model_inputs['L_exp'] = sweep_input['L_exp']
+
+    # capacity inputs
+    if sweep_input['scenario'] == 'wind_only':
+        model_inputs['X_well'] = 0.0
+        model_inputs['X_cmp'] = 0.0
+        model_inputs['X_exp'] = 0.0
+        model_inputs['eta_storage'] = 1.0
+    else:
+        model_inputs['X_well'] = sweep_input['capacity']
+        model_inputs['X_cmp'] = sweep_input['capacity']
+        model_inputs['X_exp'] = sweep_input['capacity']
+
+    if model_inputs['objective'] == 'CONST_DISPATCH_OPT':
+        model_inputs['X_dispatch'] = sweep_input['capacity']
+
+
 
     print('Scenario: ' + str(sweep_input['scenario']))
     print('X_wind:   ' + str(model_inputs['X_wind']))
