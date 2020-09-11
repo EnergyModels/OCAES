@@ -118,7 +118,7 @@ if __name__ == '__main__':
                             'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
                             'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
     # timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    capacities = np.arange(250.0, 501, 250)
+    capacities = np.arange(10.0, 501, 10)
     objectives = ['COVE']
 
     # ------------------

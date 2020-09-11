@@ -96,15 +96,15 @@ if __name__ == '__main__':
     scenarios_filename = 'scenarios.xlsx'  # Excel file with scenario inputs
     costs_filename = 'cost_study_results.csv'  # CSV file with scenario inputs
     sizing_filename = 'sizing_study_results.csv'  # CSV file with sizing study results
-    scenarios = ['4_hr_batt', '10_hr_batt','10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']  # Excel sheet_names
-    iterations = [1,1,1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
+    scenarios = ['4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']  # Excel sheet_names
+    iterations = [1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
     ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
     # timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
     #                         'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
     #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    capacities = np.arange(10.0, 501, 10)
-    wind_capacities = np.arange(10.0, 501, 10)
+    timeseries_filenames = ['da_timeseries_inputs_2019.csv']  # list of csv files
+    capacities = np.arange(20.0, 501, 20)
+    wind_capacities = np.arange(20.0, 501, 20)
     objectives = ['CONST_DISPATCH_FIX']
 
     # ------------------

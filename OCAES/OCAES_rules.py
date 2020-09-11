@@ -91,8 +91,8 @@ def energy_stored(model, t):
         return model.E_well[t] == model.E_well_init
     else:
         return model.E_well[t] == model.E_well[t - 1] + \
-               model.eta_storage_single * model.P_cmp[t] * model.delta_t - \
-               model.eta_storage_single * model.P_exp[t] * model.delta_t
+               model.delta_t * model.P_cmp[t] * model.eta_storage_single - \
+               model.delta_t * model.P_exp[t] / model.eta_storage_single
 
 
 def energy_stored_final(model):
@@ -116,7 +116,8 @@ def total_electricity(model):
 
 
 def yearly_electricity_generated(model):
-    return model.yearly_electricity_generated == sum(model.P_wind[t] for t in model.t) * 8760 / (model.T * model.delta_t)
+    return model.yearly_electricity_generated == sum(model.P_wind[t] for t in model.t) * 8760 / (
+                model.T * model.delta_t)
 
 
 def yearly_electricity(model):
@@ -142,11 +143,13 @@ def yearly_electricity_revenue(model):
 
 
 def yearly_capacity_credit(model):
-    return model.yearly_capacity_credit == model.CC_value * 365 * min(model.X_wind, model.X_wind * model.CC_wind + model.X_exp * model.CC_exp)
+    return model.yearly_capacity_credit == model.CC_value * 365 * min(model.X_wind,
+                                                                      model.X_wind * model.CC_wind + model.X_exp * model.CC_exp)
 
 
 def yearly_capacity_credit_simple(model):
-    return model.yearly_capacity_credit == model.CC_value * 365 * (model.X_wind * model.CC_wind + model.X_exp * model.CC_exp)
+    return model.yearly_capacity_credit == model.CC_value * 365 * (
+                model.X_wind * model.CC_wind + model.X_exp * model.CC_exp)
 
 
 def yearly_total_revenue(model):
