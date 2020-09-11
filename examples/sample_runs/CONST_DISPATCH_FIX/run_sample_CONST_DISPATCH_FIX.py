@@ -4,11 +4,16 @@ from OCAES import ocaes
 # ----------------------
 # create and run model
 # ----------------------
-dispatch = 10  # MW
+dispatch = 100  # MW
 duration = 24.0  # hours
+capacity = 10
 
 data = pd.read_csv('timeseries_inputs_2019_72_hours.csv')
 inputs = ocaes.get_default_inputs()
+inputs['X_wind'] = 100
+inputs['X_well'] = capacity
+inputs['X_cmp'] = capacity
+inputs['X_exp'] = capacity
 inputs['X_dispatch'] = dispatch
 inputs['pwr2energy'] = duration
 inputs['objective'] = 'CONST_DISPATCH_FIX'

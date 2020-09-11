@@ -4,11 +4,12 @@ from OCAES import ocaes
 # ----------------------
 # create and run model
 # ----------------------
-capacity = 130  # MW
+capacity = 10  # MW
 duration = 24  # hours
 
 data = pd.read_csv('timeseries_inputs_2019_72_hours.csv')
 inputs = ocaes.get_default_inputs()
+inputs['X_wind'] = 0
 inputs['X_well'] = capacity
 inputs['X_cmp'] = capacity
 inputs['X_exp'] = capacity
