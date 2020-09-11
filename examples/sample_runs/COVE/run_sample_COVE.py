@@ -8,8 +8,9 @@ capacity = 10  # MW
 duration = 24  # hours
 
 data = pd.read_csv('timeseries_inputs_2019_72_hours.csv')
+data = pd.read_csv('da_timeseries_inputs_2019.csv')
 inputs = ocaes.get_default_inputs()
-inputs['X_wind'] = 0
+inputs['X_wind'] = 500
 inputs['X_well'] = capacity
 inputs['X_cmp'] = capacity
 inputs['X_exp'] = capacity

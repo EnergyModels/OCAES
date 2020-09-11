@@ -185,14 +185,14 @@ class ocaes:
 
         # power capacity - wind [MW]
         if not(inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
-            model.X_wind = Param(initialize=inputs['X_wind'])
+            model.X_wind = Param(initialize=float(inputs['X_wind']))
 
         # power capacity -storage [MW]
         if not(inputs['objective'] == 'CONST_DISPATCH'):
-            model.X_well = Param(initialize=inputs['X_well'])
-            model.X_cmp = Param(initialize=inputs['X_cmp'])
-            model.X_exp = Param(initialize=inputs['X_exp'])
-            model.X_storage = Param(initialize=inputs['X_exp'])
+            model.X_well = Param(initialize=float(inputs['X_well']))
+            model.X_cmp = Param(initialize=float(inputs['X_cmp']))
+            model.X_exp = Param(initialize=float(inputs['X_exp']))
+            model.X_storage = Param(initialize=float(inputs['X_exp']))
 
         # power capacity - dispatch [MW]
         if not(inputs['objective'] == 'CONST_DISPATCH_FIX' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):

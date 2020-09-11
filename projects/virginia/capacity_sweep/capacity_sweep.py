@@ -51,6 +51,10 @@ def parameter_sweep(sweep_input):
     model_inputs['L_cmp'] = sweep_input['L_cmp']
     model_inputs['L_exp'] = sweep_input['L_exp']
 
+    print('Scenario: ' + str(sweep_input['scenario']))
+    print('X_wind:   ' + str(model_inputs['X_wind']))
+    print('Capacity: ' + str(sweep_input['capacity']))
+
     # run model
     model = ocaes(data, model_inputs)
     df, s = model.get_full_results()
@@ -110,11 +114,11 @@ if __name__ == '__main__':
     iterations = [1, 1, 1,
                   1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
     ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
-    # timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
-    #                         'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
-    #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    capacities = np.arange(0.0, 501, 10)
+    timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
+                            'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
+                            'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
+    # timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
+    capacities = np.arange(250.0, 501, 250)
     objectives = ['COVE']
 
     # ------------------
