@@ -8,7 +8,7 @@ import numpy as np
 # =====================================
 # data input
 results_filename = "sweep_results.csv"
-results_filename2 = "sweep_results_batt.csv"
+# results_filename2 = "sweep_results_batt.csv"
 
 # figure output
 DPI = 600  # Set resolution for saving figures
@@ -21,7 +21,7 @@ x_limits = [[0.0, 100.0]]
 y_vars_all = ["LCOE", "X_wind", "X_exp", "yearly_curtailment_fr"]
 y_labels_all = ["LCOE\n($/kWh)", "Wind\n(MW)", "Storage\n(MW)", "Curtailment\n(-)"]
 y_converts_all = [1.0, 1.0, 1.0, 1.0]
-y_limits_all = [[], [0.0,1000.0], [0.0,500.0], []]
+y_limits_all = [[], [0.0, 1000.0], [0.0, 500.0], []]
 
 series_var = 'scenario'
 series = ['4_hr_batt', '10_hr_batt',
@@ -44,31 +44,53 @@ markers = ['s', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H',
 
 # Import results
 df1 = pd.read_csv(results_filename)
-df2 = pd.read_csv(results_filename2)
+# df2 = pd.read_csv(results_filename2)
 
 
 df3 = pd.DataFrame()
 # Filter df1 results
+
+# by lowest cost per storage power
 for timeseries_filename in df1.timeseries_filename.unique():
     for objective in df1.objective.unique():
         for sheetname in df1.sheetname.unique():
             for capacity in df1.capacity.unique():
                 dfix = df1[(df1.loc[:, "timeseries_filename"] == timeseries_filename) &
-                         (df1.loc[:, "objective"] == objective) &
-                         (df1.loc[:, "sheetname"] == sheetname) &
-                         (df1.loc[:, "capacity"] == capacity)]
+                           (df1.loc[:, "objective"] == objective) &
+                           (df1.loc[:, "sheetname"] == sheetname) &
+                           (df1.loc[:, "capacity"] == capacity)]
 
                 min_LCOE = dfix.LCOE.min()
-                ind = dfix.LCOE==min_LCOE
-                df3 = pd.concat([df3,dfix.loc[ind]],ignore_index=True)
+                ind = dfix.LCOE == min_LCOE
+                df3 = pd.concat([df3, dfix.loc[ind]], ignore_index=True)
+
+# binning approach
+df4 = pd.DataFrame()
+bins = np.arange(0, 101, 4)
+for timeseries_filename in df1.timeseries_filename.unique():
+    for objective in df1.objective.unique():
+        for sheetname in df1.sheetname.unique():
+            for i in range(len(bins) - 1):
+                left = bins[i]
+                right = bins[i + 1]
+                dfix = df1[(df1.loc[:, "timeseries_filename"] == timeseries_filename) &
+                           (df1.loc[:, "objective"] == objective) &
+                           (df1.loc[:, "sheetname"] == sheetname) &
+                           (left <= df1.loc[:, "X_dispatch"]) &
+                           (df1.loc[:, "X_dispatch"] < right)]
+
+                min_LCOE = dfix.LCOE.min()
+                ind = dfix.LCOE == min_LCOE
+                df4 = pd.concat([df4, dfix.loc[ind]], ignore_index=True)
 
 
 
 
 ###########
-df2 = df2[(df2.loc[:, "objective"] == 'CONST_DISPATCH') &
-          ((df2.loc[:, "sheetname"] == '4_hr_batt') | (df2.loc[:, "sheetname"] == '10_hr_batt'))]
-df = pd.concat([df3, df2])
+# df2 = df2[(df2.loc[:, "objective"] == 'CONST_DISPATCH') &
+#           ((df2.loc[:, "sheetname"] == '4_hr_batt') | (df2.loc[:, "sheetname"] == '10_hr_batt'))]
+# df = pd.concat([df3, df2])
+df = df4
 # Only select results with CONST_DISPATCH objective
 objective = 'CONST_DISPATCH_FIX'
 # df = df[df.loc[:, "objective"] == objective]

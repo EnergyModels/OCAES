@@ -4,7 +4,7 @@ from OCAES import ocaes
 # ----------------------
 # create and run model
 # ----------------------
-capacity = 130  # MW
+capacity = 200  # MW
 duration = 24  # hours
 
 data = pd.read_csv('timeseries_inputs_2019_72_hours.csv')
@@ -13,7 +13,7 @@ inputs['X_well'] = capacity
 inputs['X_cmp'] = capacity
 inputs['X_exp'] = capacity
 inputs['pwr2energy'] = duration
-inputs['objective'] = 'CONST_DISPATCH'
+inputs['objective'] = 'COVE'
 model = ocaes(data, inputs)
 df, s = model.get_full_results()
 
