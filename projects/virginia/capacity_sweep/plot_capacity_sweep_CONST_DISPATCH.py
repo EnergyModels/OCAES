@@ -13,14 +13,14 @@ results_filename = "sweep_results.csv"
 DPI = 600  # Set resolution for saving figures
 
 x_vars = ["capacity"]
-x_labels = ["Dispatch power (MW)"]
+x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0]
-x_limits = [[0.0, 200.0]]
+x_limits = [[]]
 
-y_vars_all = ["LCOE", "X_wind", "X_exp", "yearly_curtailment_fr"]
-y_labels_all = ["LCOE\n($/kWh)",  "Wind\n(MW)", "Storage\n(MW)", "Curtailment\n(-)"]
-y_converts_all = [1.0,  1.0, 1.0, 1.0]
-y_limits_all = [[], [], [], []]
+y_vars_all = ["X_dispatch", "LCOE"]
+y_labels_all = ["Constant power output\n(MW)", "LCOE\n($/kWh)"]
+y_converts_all = [1.0, 1.0]
+y_limits_all = [[], [0.0, 2.5]]
 
 series_var = 'scenario'
 series = ['4_hr_batt', '10_hr_batt',
@@ -45,10 +45,10 @@ markers = ['s', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H',
 df = pd.read_csv(results_filename)
 
 # Only select results with CONST_DISPATCH objective
-objective = 'CONST_DISPATCH'
+objective = 'CD_FIX_WIND_STOR'
 df = df[df.loc[:, "objective"] == objective]
 
-for v in range(2):
+for v in range(1):
     # variable selection
 
     if v == 0:
@@ -80,7 +80,7 @@ for v in range(2):
         # 1.5 column: 140 mm = 5.51 in
         # 2 column: 190 mm = 7.48 i
         width = 7.48  # inches
-        height = 8.0  # inches
+        height = 6.0  # inches
 
         # Create plot
         f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', squeeze=False)
@@ -155,7 +155,7 @@ for v in range(2):
         # y_pos = j / 2 + 0.5
         # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
         x_pos = 0.45
-        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.4), ncol=3, loc='upper center')
+        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.25), ncol=3, loc='upper center')
 
         # Adjust layout
         # plt.tight_layout()
