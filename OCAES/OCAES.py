@@ -185,20 +185,18 @@ class ocaes:
         model.T = Param(initialize=T)  # number of time steps
 
         # power capacity - wind [MW]
-        if inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
+        if not (inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_DISP_STOR'):
             model.X_wind = Param(initialize=float(inputs['X_wind']))
 
         # power capacity -storage [MW]
-        if inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_STOR' or \
-                inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
+        if not (inputs['objective'] == 'CD_FIX_DISP'):
             model.X_well = Param(initialize=float(inputs['X_well']))
             model.X_cmp = Param(initialize=float(inputs['X_cmp']))
             model.X_exp = Param(initialize=float(inputs['X_exp']))
             model.X_storage = Param(initialize=float(inputs['X_exp']))
 
         # power capacity - dispatch [MW]
-        if inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_DISP_STOR' or \
-                inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
+        if not(inputs['objective'] == 'CD_FIX_WIND_STOR'):
             model.X_dispatch = Param(initialize=float(inputs['X_dispatch']))
 
         # storage performance
@@ -250,20 +248,18 @@ class ocaes:
         # Variables (upper case)
         # ----------------
         # power capacity - wind [MW]
-        if not (inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_WIND_STOR'):
+        if inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_DISP_STOR':
             model.X_wind = Var(within=NonNegativeReals, initialize=float(inputs['X_wind']))
 
         # power capacity -storage [MW]
-        if not (inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_STOR' or inputs[
-            'objective'] == 'CD_FIX_DISP_WIND_STOR'):
+        if inputs['objective'] == 'CD_FIX_DISP':
             model.X_well = Var(within=NonNegativeReals, initialize=float(inputs['X_well']))
             model.X_cmp = Var(within=NonNegativeReals, initialize=float(inputs['X_cmp']))
             model.X_exp = Var(within=NonNegativeReals, initialize=float(inputs['X_exp']))
             model.X_storage = Var(within=NonNegativeReals, initialize=float(inputs['X_exp']))
 
         # power capacity - dispatch [MW]
-        if not (inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_DISP_STOR' or inputs[
-            'objective'] == 'CD_FIX_DISP_WIND_STOR'):
+        if inputs['objective'] == 'CD_FIX_WIND_STOR':
             model.X_dispatch = Var(within=NonNegativeReals, initialize=float(inputs['X_dispatch']))
 
         # Decision variables - energy flows

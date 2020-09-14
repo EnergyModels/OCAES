@@ -55,6 +55,7 @@ def parameter_sweep(sweep_input):
     print('Scenario: ' + str(sweep_input['scenario']))
     print('X_wind:   ' + str(model_inputs['X_wind']))
     print('Capacity: ' + str(sweep_input['capacity']))
+    print('Objective: ' + str(sweep_input['objective']))
 
     # run model
     model = ocaes(data, model_inputs)
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     # timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
     #                         'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
     #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
+    timeseries_filenames = ['da_timeseries_inputs_2019.csv']#, 'rt_timeseries_inputs_2019.csv']  # list of csv files
     capacities = np.arange(10.0, 501, 10)
     objectives = ['COVE', 'CD_FIX_WIND_STOR']
 
