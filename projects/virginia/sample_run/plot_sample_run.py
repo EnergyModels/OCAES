@@ -51,6 +51,7 @@ x_var = 'time'
 x_label = 'Time [hr]'
 x_convert = 1.0
 n_entries = [0, 72]  # start and end entries - leave empty to plot all
+x_lims = [0.0, 80.0]
 
 # array to hold legends
 leg = []
@@ -69,15 +70,17 @@ for i in range(nrows):
         c_list = [(0,0,0)]
         markers = ['o']
         styles = ['-']
+        y_lims = [0.0, 40.0]
 
     elif i == 1:
         y_label = 'Power\n[MW]'
         y_convert = 1.0
         y_vars = ['P_wind', 'P_grid_sell']
-        y_var_labels = ['Wind', 'Sold to grid']
+        y_var_labels = ['Wind power production', 'Net delivered to grid']
         c_list = [colors[2], colors[5]]
         markers = ['^', 'v']
         styles = ['-', '-']
+        y_lims = [0.0, 600.0]
 
     elif i == 2:
         y_label = 'OCAES power\n[MW]'
@@ -87,6 +90,7 @@ for i in range(nrows):
         c_list = [colors[0], colors[1]]
         markers = ['+', 's']
         styles = ['-', '-']
+        y_lims = [0.0, 300.0]
 
     else:  # if i == 3:
         y_label = 'Energy storage\n[MWh]'
@@ -96,6 +100,7 @@ for i in range(nrows):
         c_list = [colors[7]]
         markers = ['^']
         styles = ['-']
+        y_lims = [0.0, 6000.0]
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
@@ -123,6 +128,14 @@ for i in range(nrows):
     # Despine and remove ticks
     sns.despine(ax=ax, )
     ax.tick_params(top=False, right=False)
+
+    # Axes limits
+    if len(y_lims) == 2:
+        ax.set_ylim(bottom=y_lims[0], top=y_lims[1])
+
+    # Axes limits
+    if len(x_lims) == 2:
+        ax.set_xlim(left=x_lims[0], right=x_lims[1])
 
     # Caption labels
     caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N']
