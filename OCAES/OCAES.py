@@ -21,12 +21,13 @@ class ocaes:
         inputs['delta_t'] = 1  # [hr]
         inputs['objective'] = 'REVENUE'  # objective function
         # options are COVE, REVENUE, REVENUE_ARBITRAGE, PROFIT,
-        # CONST_DISPATCH, CONST_DISPATCH_FIX, or CONST_DISPATCH_FIX_STOR
+        # CD_FIX_DISP, CD_FIX_WIND_STOR, or CD_FIX_DISP_STOR
 
-        # Constant dispatch - power output is held constant for entire time series
-        # CONST_DISPATCH - wind and storage capacities optimized (variable)
-        # CONST_DISPATCH_FIX - wind and stoarge capacities are fixed
-        # CONST_DISPATCH_FIX_STOR - storage capacity is fixed, wind is variable
+        # Constant dispatch (CD) - power output is held constant for entire time series
+        # CD_FIX_DISP - dispatch is fixed, wind and storage capacities optimized (variable)
+        # CD_FIX_DISP_WIND_STOR - dispatch, wind and stoarge capacities are fixed
+        # CD_FIX_DISP_STOR - dispatch and storage fixed, wind is optimzied (variable)
+        # CD_FIX_WIND_STOR - wind and stoarge are fixed, dispatch is optimized (variable)
 
         # Power capacity [MW]
         inputs['X_wind'] = 500.0  # wind farm
@@ -42,9 +43,9 @@ class ocaes:
 
         # Capital costs [$/MW]
         inputs['C_wind'] = 4444.0 * 1000.0
-        inputs['C_well'] = 144.986 * 1000.0  # TODO
+        inputs['C_well'] = 144.986 * 1000.0
         inputs['C_cmp'] = 0.0
-        inputs['C_exp'] = 930.438 * 1000.0  # TODO
+        inputs['C_exp'] = 930.438 * 1000.0
 
         # Variable costs [$/MWh]
         inputs['V_wind'] = 0.0
@@ -146,10 +147,6 @@ class ocaes:
 
         # COVE calculations
         data.loc[:, 'R'] = data.price_dollarsPerMWh / data.price_dollarsPerMWh.mean()  # normalized price
-        # data.loc[:, 'D'] = data.generation_MW / data.generation_MW.mean() # normalized demand
-        # data.loc[:, 'R'] = (
-        # data.generation_MW - data.VRE_MW)  # residual demand/ data.generation_MW.mean() # normalized residual demand
-        # data.loc[:, 'Q'] = data.VRE_MW / data.generation_MW.mean() # normalized VRE production
 
         # ================================
         # Process data
@@ -188,18 +185,20 @@ class ocaes:
         model.T = Param(initialize=T)  # number of time steps
 
         # power capacity - wind [MW]
-        if not (inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
+        if inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
             model.X_wind = Param(initialize=float(inputs['X_wind']))
 
         # power capacity -storage [MW]
-        if not (inputs['objective'] == 'CONST_DISPATCH'):
+        if inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_STOR' or \
+                inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
             model.X_well = Param(initialize=float(inputs['X_well']))
             model.X_cmp = Param(initialize=float(inputs['X_cmp']))
             model.X_exp = Param(initialize=float(inputs['X_exp']))
             model.X_storage = Param(initialize=float(inputs['X_exp']))
 
         # power capacity - dispatch [MW]
-        if not (inputs['objective'] == 'CONST_DISPATCH_FIX' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR'):
+        if inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_DISP_STOR' or \
+                inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
             model.X_dispatch = Param(initialize=float(inputs['X_dispatch']))
 
         # storage performance
@@ -251,18 +250,20 @@ class ocaes:
         # Variables (upper case)
         # ----------------
         # power capacity - wind [MW]
-        if inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
+        if not (inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_WIND_STOR'):
             model.X_wind = Var(within=NonNegativeReals, initialize=float(inputs['X_wind']))
 
         # power capacity -storage [MW]
-        if inputs['objective'] == 'CONST_DISPATCH':
+        if not (inputs['objective'] == 'CD_FIX_WIND_STOR' or inputs['objective'] == 'CD_FIX_DISP_STOR' or inputs[
+            'objective'] == 'CD_FIX_DISP_WIND_STOR'):
             model.X_well = Var(within=NonNegativeReals, initialize=float(inputs['X_well']))
             model.X_cmp = Var(within=NonNegativeReals, initialize=float(inputs['X_cmp']))
             model.X_exp = Var(within=NonNegativeReals, initialize=float(inputs['X_exp']))
             model.X_storage = Var(within=NonNegativeReals, initialize=float(inputs['X_exp']))
 
         # power capacity - dispatch [MW]
-        if inputs['objective'] == 'CONST_DISPATCH_FIX' or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
+        if not (inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_DISP_STOR' or inputs[
+            'objective'] == 'CD_FIX_DISP_WIND_STOR'):
             model.X_dispatch = Var(within=NonNegativeReals, initialize=float(inputs['X_dispatch']))
 
         # Decision variables - energy flows
@@ -305,7 +306,7 @@ class ocaes:
         model.cnst_pwr_wind = Constraint(model.t, rule=rules.pwr_wind)
 
         # capacity
-        if inputs['objective'] == 'CONST_DISPATCH':
+        if inputs['objective'] == 'CD_FIX_DISP':
             model.cnst_cap_well_var = Constraint(rule=rules.capacity_well_var)
             model.cnst_cap_cmp_var = Constraint(rule=rules.capacity_cmp_var)
             model.cnst_cap_exp_var = Constraint(rule=rules.capacity_exp_var)
@@ -345,8 +346,8 @@ class ocaes:
         # economics
         model.cnst_electricity_revenue = Constraint(model.t, rule=rules.electricity_revenue)
         model.cnst_yearly_electricity_revenue = Constraint(rule=rules.yearly_electricity_revenue)
-        if inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX' or \
-                inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
+        if inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_WIND_STOR' or \
+                inputs['objective'] == 'CD_FIX_DISP_STOR' or inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
             model.cnst_yearly_capacity_credit_simple = Constraint(rule=rules.yearly_capacity_credit_simple)
         else:
             model.cnst_yearly_capacity_credit = Constraint(rule=rules.yearly_capacity_credit)
@@ -358,20 +359,21 @@ class ocaes:
         model.cnst_yearly_electricity_value = Constraint(rule=rules.yearly_electricity_value)
 
         # Constant Dispatch
-        if inputs['objective'] == 'CONST_DISPATCH' or inputs['objective'] == 'CONST_DISPATCH_FIX' or \
-                inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
+        if inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_WIND_STOR' or \
+                inputs['objective'] == 'CD_FIX_DISP_STOR' or inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
             model.cnst_pwr_dispatch_const = Constraint(model.t, rule=rules.pwr_dispatch_const)
 
         # ----------------
         # Objective
         # ----------------
-        if inputs['objective'] == 'COVE':
+        if inputs['objective'] == 'COVE' or inputs['objective'] == 'CD_FIX_WIND_STOR':
             model.objective = Objective(sense=maximize, rule=rules.objective_COVE)
         elif inputs['objective'] == 'PROFIT':
             model.objective = Objective(sense=maximize, rule=rules.objective_PROFIT)
-        elif inputs['objective'] == 'CONST_DISPATCH':  # or inputs['objective'] == 'CONST_DISPATCH_FIX_STOR':
+        elif inputs['objective'] == 'CD_FIX_DISP' or inputs['objective'] == 'CD_FIX_DISP_STOR' or \
+                inputs['objective'] == 'CD_FIX_DISP_WIND_STOR':
             model.objective = Objective(sense=minimize, rule=rules.objective_COST)
-        else:  # REVENUE, REVENUE_ARBITRAGE or CONST_DISPATCH_FIX
+        else:  # REVENUE, REVENUE_ARBITRAGE
             model.objective = Objective(sense=maximize, rule=rules.objective_revenue)
 
         # ----------------

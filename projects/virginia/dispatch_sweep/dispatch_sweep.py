@@ -22,6 +22,12 @@ def parameter_sweep(sweep_input):
 
     model_inputs['objective'] = sweep_input['objective']
 
+    # capacity inputs
+    model_inputs['X_well'] = sweep_input['storage_capacity']
+    model_inputs['X_cmp'] = sweep_input['storage_capacity']
+    model_inputs['X_exp'] = sweep_input['storage_capacity']
+    model_inputs['X_dispatch'] = sweep_input['dispatch_capacity']
+
     # scenario specific inputs
     model_inputs['pwr2energy'] = sweep_input['pwr2energy']
     model_inputs['eta_storage'] = sweep_input['eta_storage']
@@ -37,24 +43,6 @@ def parameter_sweep(sweep_input):
     model_inputs['L_well'] = sweep_input['L_well']
     model_inputs['L_cmp'] = sweep_input['L_cmp']
     model_inputs['L_exp'] = sweep_input['L_exp']
-
-    # capacity inputs
-    if sweep_input['scenario'] == 'wind_only':
-        model_inputs['X_well'] = 0.0
-        model_inputs['X_cmp'] = 0.0
-        model_inputs['X_exp'] = 0.0
-        model_inputs['eta_storage'] = 1.0
-    else:
-        model_inputs['X_well'] = sweep_input['capacity']
-        model_inputs['X_cmp'] = sweep_input['capacity']
-        model_inputs['X_exp'] = sweep_input['capacity']
-
-    if model_inputs['objective'] == 'CONST_DISPATCH_OPT':
-        model_inputs['X_dispatch'] = sweep_input['capacity']
-
-    print('Scenario: ' + str(sweep_input['scenario']))
-    print('X_wind:   ' + str(model_inputs['X_wind']))
-    print('Capacity: ' + str(sweep_input['capacity']))
 
     # run model
     model = ocaes(data, model_inputs)
@@ -108,32 +96,29 @@ if __name__ == '__main__':
     scenarios_filename = 'scenarios.xlsx'  # Excel file with scenario inputs
     costs_filename = 'cost_study_results.csv'  # CSV file with scenario inputs
     sizing_filename = 'sizing_study_results.csv'  # CSV file with sizing study results
-    scenarios = ['wind_only', '4_hr_batt', '10_hr_batt',
-                 '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']  # Excel sheet_names
-    iterations = [1, 1, 1,
-                  1, 1, 1, 1, 1]  # number of runs per scenario per capacity (same order as scenarios)
-    ncpus = 6  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
-    # timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
-    #                         'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
-    #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    timeseries_filenames = ['da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    capacities = np.arange(10.0, 501, 10)
-    objectives = ['COVE', 'CD_FIX_WIND_STOR']
+    scenarios = ['4_hr_batt', '10_hr_batt', '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']  # Excel sheet_names
+    ncpus = 6  # number of cpus to use
+    timeseries_filenames = ['da_timeseries_inputs_2019.csv']  # list of csv files
+    storage_capacities = np.arange(100.0, 501.0, 10.0)
+    dispatch_capacities = np.arange(25.0, 25.1, 1.0)
+    objectives = ['CD_FIX_DISP_STOR']
 
     # ------------------
     # create sweep_inputs dataframe
     # ------------------
+    n_iterations = 1
     sweep_inputs = pd.DataFrame()
     for objective in objectives:
         for timeseries_filename in timeseries_filenames:
-            for scenario, n_iterations in zip(scenarios, iterations):
-                if not (scenario == 'wind_only' and objective == 'CD_FIX_WIND_STOR'):
-                    df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
-                    df_scenario.loc[:, 'scenario'] = scenario
-                    df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
-                    df_scenario.loc[:, 'objective'] = objective
-                    for capacity in capacities:
-                        df_scenario.loc[:, 'capacity'] = capacity
+            for scenario in scenarios:
+                df_scenario = monteCarloInputs(scenarios_filename, scenario, n_iterations)
+                df_scenario.loc[:, 'scenario'] = scenario
+                df_scenario.loc[:, 'timeseries_filename'] = timeseries_filename
+                df_scenario.loc[:, 'objective'] = objective
+                for storage_capacity in storage_capacities:
+                    for dispatch_capacity in dispatch_capacities:
+                        df_scenario.loc[:, 'storage_capacity'] = storage_capacity
+                        df_scenario.loc[:, 'dispatch_capacity'] = dispatch_capacity
                         sweep_inputs = sweep_inputs.append(df_scenario)
 
     # reset index (appending messes up indices)
@@ -158,6 +143,7 @@ if __name__ == '__main__':
         sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], costs.capacity_MW,
                                                    costs.CAPEX_dollars_per_kW) * 1000.0
         # efficiency
+        # ind2 = sizing.loc[:, 'duration_hr'] == sweep_inputs.loc[ind, 'pwr2energy'].unique()[0]
         sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'], sizing.capacity_MW,
                                                          sizing.RTE, right=-1)
 
