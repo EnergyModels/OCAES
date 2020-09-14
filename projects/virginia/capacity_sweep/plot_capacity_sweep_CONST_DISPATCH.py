@@ -15,12 +15,12 @@ DPI = 600  # Set resolution for saving figures
 x_vars = ["capacity"]
 x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0]
-x_limits = [[]]
+x_limits = [[0.0,500.0]]
 
 y_vars_all = ["X_dispatch", "LCOE"]
 y_labels_all = ["Constant power output\n(MW)", "LCOE\n($/kWh)"]
 y_converts_all = [1.0, 1.0]
-y_limits_all = [[], [0.0, 2.5]]
+y_limits_all = [[0.0,120.0], [0.0, 2.5]]
 
 series_var = 'scenario'
 series = ['4_hr_batt', '10_hr_batt',
@@ -144,6 +144,10 @@ for v in range(1):
                 # Axes limits
                 if len(y_limit) == 2:
                     ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
+
+                # Axes limits
+                if len(x_limit) == 2:
+                    ax.set_xlim(left=x_limit[0], right=x_limit[1])
 
                 # Caption labels
                 caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']

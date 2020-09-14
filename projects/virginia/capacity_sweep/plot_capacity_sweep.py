@@ -14,8 +14,8 @@ DPI = 600  # Set resolution for saving figures
 
 x_vars = ["capacity"]
 x_labels = ["Storage power rating (MW)"]
-x_converts = [1.0, 1.0]
-x_limits = [[], []]
+x_converts = [1.0]
+x_limits = [[0.0,500.0]]
 
 y_vars_all = ["revenue", "LCOE", "COVE"]
 y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)"]
@@ -147,6 +147,10 @@ for timeseries_filename in df.timeseries_filename.unique():
                 if len(y_limit)==2:
                     ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
 
+                # Axes limits
+                if len(x_limit) == 2:
+                    ax.set_xlim(left=x_limit[0], right=x_limit[1])
+
                 # Caption labels
                 caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
                 plt.text(-0.1, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
@@ -157,7 +161,7 @@ for timeseries_filename in df.timeseries_filename.unique():
         # y_pos = j / 2 + 0.5
         # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
         x_pos = 0.45
-        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.4), ncol=3, loc='upper center')
+        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.3), ncol=3, loc='upper center')
 
         # Adjust layout
         # plt.tight_layout()
