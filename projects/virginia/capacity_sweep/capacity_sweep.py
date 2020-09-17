@@ -74,6 +74,9 @@ def parameter_sweep(sweep_input):
     results['avoided_emissions_tonnes'] = s['avoided_emissions']
     results['yearly_electricity_MWh'] = s['yearly_electricity']
     results['yearly_electricity_generated_MWh'] = s['yearly_electricity_generated']
+    results['yearly_electricity_purchased_MWh'] = s['yearly_electricity_purchased']
+    results['yearly_exp_usage_MWh'] = s['yearly_exp_usage']
+    results['yearly_cmp_usage_MWh'] = s['yearly_cmp_usage']
     results['yearly_curtailment_MWh'] = s['yearly_curtailment']
     results['yearly_curtailment_fr'] = s['yearly_curtailment'] / s['yearly_electricity_generated']
     results['yearly_electricity_revenue_dollars'] = s['yearly_electricity_revenue']
@@ -117,7 +120,7 @@ if __name__ == '__main__':
     # timeseries_filenames = ['da_timeseries_inputs_2015.csv', 'rt_timeseries_inputs_2015.csv',
     #                         'da_timeseries_inputs_2017.csv', 'rt_timeseries_inputs_2017.csv',
     #                         'da_timeseries_inputs_2019.csv', 'rt_timeseries_inputs_2019.csv']  # list of csv files
-    timeseries_filenames = ['da_timeseries_inputs_2019.csv']#, 'rt_timeseries_inputs_2019.csv']  # list of csv files
+    timeseries_filenames = ['da_timeseries_inputs_2019.csv']  # 'rt_timeseries_inputs_2019.csv']  # list of csv files
     capacities = np.arange(10.0, 501, 10)
     objectives = ['COVE', 'CD_FIX_WIND_STOR']
 

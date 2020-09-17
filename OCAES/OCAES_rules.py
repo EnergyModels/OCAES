@@ -115,17 +115,30 @@ def total_electricity(model):
     return model.total_electricity == sum(model.P_wind[t] for t in model.t)
 
 
+def yearly_electricity(model):
+    return model.yearly_electricity == sum(model.P_grid_sell[t] for t in model.t) * 8760 / (model.T * model.delta_t)
+
+
 def yearly_electricity_generated(model):
     return model.yearly_electricity_generated == sum(model.P_wind[t] for t in model.t) * 8760 / (
                 model.T * model.delta_t)
 
 
-def yearly_electricity(model):
-    return model.yearly_electricity == sum(model.P_grid_sell[t] for t in model.t) * 8760 / (model.T * model.delta_t)
+def yearly_electricity_purchased(model):
+    return model.yearly_electricity_purchased == sum(model.P_grid_buy[t] for t in model.t) * 8760 / (
+            model.T * model.delta_t)
 
 
 def yearly_curtailment(model):
     return model.yearly_curtailment == sum(model.P_curtail[t] for t in model.t) * 8760 / (model.T * model.delta_t)
+
+
+def yearly_exp_usage(model):
+    return model.yearly_exp_usage == sum(model.P_exp[t] for t in model.t) * 8760 / (model.T * model.delta_t)
+
+
+def yearly_cmp_usage(model):
+    return model.yearly_cmp_usage == sum(model.P_cmp[t] for t in model.t) * 8760 / (model.T * model.delta_t)
 
 
 # ----------------

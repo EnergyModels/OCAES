@@ -282,7 +282,10 @@ class ocaes:
         # electricity (delivered to the grid and generated)
         model.yearly_electricity = Var(within=Reals, initialize=0.0)  # scaled for one year
         model.yearly_electricity_generated = Var(within=Reals, initialize=0.0)  # scaled for one year
+        model.yearly_electricity_purchased = Var(within=Reals, initialize=0.0)  # scaled for one year
         model.yearly_curtailment = Var(within=Reals, initialize=0.0)  # scaled for one year
+        model.yearly_exp_usage = Var(within=Reals, initialize=0.0)  # scaled for one year
+        model.yearly_cmp_usage = Var(within=Reals, initialize=0.0)  # scaled for one year
 
         # Economics
         model.electricity_revenue = Var(model.t, within=Reals, initialize=0.0)
@@ -337,7 +340,10 @@ class ocaes:
         # electricity
         model.cnst_yearly_electricity = Constraint(rule=rules.yearly_electricity)
         model.cnst_yearly_electricity_generated = Constraint(rule=rules.yearly_electricity_generated)
+        model.cnst_yearly_electricity_purchased = Constraint(rule=rules.yearly_electricity_purchased)
         model.cnst_yearly_curtailment = Constraint(rule=rules.yearly_curtailment)
+        model.cnst_yearly_exp_usage = Constraint(rule=rules.yearly_exp_usage)
+        model.cnst_yearly_cmp_usage = Constraint(rule=rules.yearly_cmp_usage)
 
         # economics
         model.cnst_electricity_revenue = Constraint(model.t, rule=rules.electricity_revenue)
