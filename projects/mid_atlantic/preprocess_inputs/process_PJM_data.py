@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 data_folders = ['2019_PJM']
 price_files = ['da_hrl_lmps_DOM_19.csv']
 generation_by_fuel_files = ['2019_gen_by_fuel.csv']
-wind_speed_files = ['Clean_1yr_90m_Windspeeds.txt']
+wind_speed_files = ['2301293_36.91_-75.32_2012.csv']
 output_filenames = ['PJM_timeseries_inputs_2019.csv']
 
 # option to output individual column data (good for troubleshooting)
@@ -20,7 +20,7 @@ write_all_data = False
 wrk_dir = os.getcwd()
 
 for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_filename in \
-        zip(data_folders, price_files,  generation_by_fuel_files, wind_speed_files, output_filenames):
+        zip(data_folders, price_files, generation_by_fuel_files, wind_speed_files, output_filenames):
 
     # ----------------------------------------
     # begin processing
@@ -163,21 +163,26 @@ for data_folder, price_file, generation_by_fuel_file, wind_speed_file, output_fi
     # ----------------------------------------
     # Wind speed
     # ----------------------------------------
-    df_ws = pd.read_csv(wind_speed_file, delimiter=' ')
+    df_ws = pd.read_csv(wind_speed_file, skiprows=1)
+
+    df_ws = df_ws.drop(columns=[ 'power - DEPRECATED'])
 
     # set year to be the same as price file
-    df_ws.year = df_price.index[0].year
+    df_ws.Year = df_price.index[0].year
 
     # create new column in datetime format and set as index
-    daytime = pd.to_datetime(df_ws[['year', 'month', 'day', 'hour', 'minute', 'second']])
+    daytime = pd.to_datetime(df_ws[['Year', 'Month', 'Day', 'Hour', 'Minute']])
     df_ws['daytime'] = daytime
     df_ws = df_ws.set_index('daytime')
+    df_ws.loc[:,'windspeed_ms'] = df_ws.loc[:, 'wind speed at 100m (m/s)']
 
     # resample on hourly basis
     df_ws = df_ws.resample('H').mean()
 
     # drop columns that we no longer need
-    df_ws = df_ws.drop(columns=['year', 'month', 'day', 'hour', 'minute', 'second'])
+    df_ws = df_ws.drop(
+        columns=['Year', 'Month', 'Day', 'Hour', 'Minute', 'wind speed at 100m (m/s)',
+                 'air temperature at 100m (C)'])
 
     # save and plot
     if write_all_data:

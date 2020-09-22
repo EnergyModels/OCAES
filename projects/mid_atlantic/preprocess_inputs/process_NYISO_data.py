@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 data_folders = ['2019_NYISO']
 price_files = ['2019_OASIS_Day-Ahead_Market_Zonal_LBMP.csv']
 price_types = ['da']  # da - day ahead
-wind_speed_files = ['Clean_1yr_90m_Windspeeds.txt']
+wind_speed_files = ['2319174_40.51_-73.59_2012.csv']
 output_filenames = ['NYISO_timeseries_inputs_2019.csv']
 zones = ['LONGIL']
 
@@ -63,21 +63,26 @@ for data_folder, price_file, price_type, wind_speed_file, output_filename, zone 
     # ----------------------------------------
     # Wind speed
     # ----------------------------------------
-    df_ws = pd.read_csv(wind_speed_file, delimiter=' ')
+    df_ws = pd.read_csv(wind_speed_file, skiprows=1)
+
+    df_ws = df_ws.drop(columns=['power - DEPRECATED'])
 
     # set year to be the same as price file
-    df_ws.year = df_price.index[0].year
+    df_ws.Year = df_price.index[0].year
 
     # create new column in datetime format and set as index
-    daytime = pd.to_datetime(df_ws[['year', 'month', 'day', 'hour', 'minute', 'second']])
+    daytime = pd.to_datetime(df_ws[['Year', 'Month', 'Day', 'Hour', 'Minute']])
     df_ws['daytime'] = daytime
     df_ws = df_ws.set_index('daytime')
+    df_ws.loc[:, 'windspeed_ms'] = df_ws.loc[:, 'wind speed at 100m (m/s)']
 
     # resample on hourly basis
     df_ws = df_ws.resample('H').mean()
 
     # drop columns that we no longer need
-    df_ws = df_ws.drop(columns=['year', 'month', 'day', 'hour', 'minute', 'second'])
+    df_ws = df_ws.drop(
+        columns=['Year', 'Month', 'Day', 'Hour', 'Minute', 'wind speed at 100m (m/s)',
+                 'air temperature at 100m (C)'])
 
     # save and plot
     if write_all_data:
