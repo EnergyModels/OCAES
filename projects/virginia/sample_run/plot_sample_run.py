@@ -50,7 +50,7 @@ f, a = plt.subplots(nrows=nrows, ncols=1, sharex='col', squeeze=False)
 x_var = 'time'
 x_label = 'Time [hr]'
 x_convert = 1.0
-n_entries = [0, 72]  # start and end entries - leave empty to plot all
+n_entries = [0, 80]  # start and end entries - leave empty to plot all
 x_lims = [0.0, 80.0]
 
 # array to hold legends
@@ -70,7 +70,7 @@ for i in range(nrows):
         c_list = [(0,0,0)]
         markers = ['o']
         styles = ['-']
-        y_lims = [0.0, 40.0]
+        y_lims = [0.0, 200.0]
 
     elif i == 1:
         y_label = 'Power\n[MW]'
