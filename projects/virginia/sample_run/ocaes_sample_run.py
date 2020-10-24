@@ -5,7 +5,7 @@ from OCAES import ocaes
 # create and run model
 # ----------------------
 capacity = 200  # MW
-duration = 24  # hours
+duration = 10  # hours
 
 data = pd.read_csv('timeseries_inputs_2019_80_hours_summer.csv')
 inputs = ocaes.get_default_inputs()

@@ -100,7 +100,7 @@ for i in range(nrows):
         c_list = [colors[7]]
         markers = ['^']
         styles = ['-']
-        y_lims = [0.0, 6000.0]
+        y_lims = [0.0, 2000.0]
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
