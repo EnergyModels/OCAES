@@ -156,14 +156,18 @@ if __name__ == '__main__':
     sizing = sizing[sizing.loc[:, 'k_type'] == 'expected']
 
     # Overwrite OCAES CAPEX with inputs
-    for sheetname in ['10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes']:
+    for sheetname, duration_hr in zip(['10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes'],
+                                      [10, 24, 48, 72, 168]):
         ind = sweep_inputs.sheetname == sheetname
         # costs
         sweep_inputs.loc[ind, 'C_exp'] = np.interp(sweep_inputs.loc[ind, 'capacity'], costs.capacity_MW,
                                                    costs.CAPEX_dollars_per_kW) * 1000.0
+
+        ind2 = sizing.duration_hr == duration_hr
         # efficiency
-        sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'], sizing.capacity_MW,
-                                                         sizing.RTE, right=-1)
+        sweep_inputs.loc[ind, 'eta_storage'] = np.interp(sweep_inputs.loc[ind, 'capacity'],
+                                                         sizing.loc[ind2, 'capacity_MW'],
+                                                         sizing.loc[ind2, 'RTE'], right=-1)
 
     # Remove any entries with bad values (RTE = -1)
     sweep_inputs = sweep_inputs[sweep_inputs.loc[:, 'eta_storage'] != -1]
