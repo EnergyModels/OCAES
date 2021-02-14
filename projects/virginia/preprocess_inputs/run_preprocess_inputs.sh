@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1
-#SBATCH --cpus-per-task=20
-#SBATCH -t 4:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH -t 1:00:00
 #SBATCH -p standard
 
 module purge
@@ -17,4 +17,5 @@ module load gurobi/9.0.1
 export NUM_PROCS=$SLURM_CPUS_PER_TASK
 
 # run
-python capacity_sweep_MA.py
+python preprocess_inputs.py
+python move_input_files.py

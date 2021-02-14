@@ -8,20 +8,19 @@ import numpy as np
 # =====================================
 # data input
 results_filename = "sweep_results.csv"
-# results_filename2 = "sweep_results_batt.csv"
 
 # figure output
 DPI = 600  # Set resolution for saving figures
 
-x_vars = ["X_dispatch"]
-x_labels = ["Dispatch power (MW)"]
+x_vars = ["capacity"]
+x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0]
-x_limits = [[0.0, 100.0]]
+x_limits = [[0.0, 500.0]]
 
-y_vars_all = ["LCOE", "X_wind", "X_exp", "yearly_curtailment_fr"]
-y_labels_all = ["LCOE\n($/kWh)", "Wind\n(MW)", "Storage\n(MW)", "Curtailment\n(-)"]
-y_converts_all = [1.0, 1.0, 1.0, 1.0]
-y_limits_all = [[], [0.0, 1000.0], [0.0, 500.0], []]
+y_vars_all = ["X_dispatch", "LCOE"]
+y_labels_all = ["Constant power output\n(MW)", "LCOE\n($/kWh)"]
+y_converts_all = [1.0, 1.0]
+y_limits_all = [[0.0, 120.0], [0.0, 2.5]]
 
 series_var = 'scenario'
 series = ['4_hr_batt', '10_hr_batt',
@@ -32,10 +31,17 @@ series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_b
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")
-colors = [colors[0], colors[5],
+# colors = [colors[0], colors[5],
+#           colors[2], colors[1], colors[3], colors[4], colors[6]]  # black, blue, brown, green, orange
+
+colors = [colors[5], colors[0],
           colors[2], colors[1], colors[3], colors[4], colors[6]]  # black, blue, brown, green, orange
-linestyles = ['solid', 'solid',
-              'dashed', 'dotted', 'solid', 'solid', 'solid']
+# linestyles = ['solid', 'solid',
+#               'dashed', 'dotted', 'solid', 'solid', 'solid']
+
+linestyles = [
+    (0, (3, 1, 1, 1)), (0, (3, 5, 1, 5)), 'dashed', (0, (5, 5)),
+    (0, (5, 10))]  # https://matplotlib.org/3.1.0/gallery/lines_bars_and_markers/linestyles.html
 markers = ['s', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
 
 # =====================================
@@ -43,59 +49,13 @@ markers = ['s', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H',
 # =====================================
 
 # Import results
-df1 = pd.read_csv(results_filename)
-# df2 = pd.read_csv(results_filename2)
+df = pd.read_csv(results_filename)
 
-
-df3 = pd.DataFrame()
-# Filter df1 results
-
-# by lowest cost per storage power
-for timeseries_filename in df1.timeseries_filename.unique():
-    for objective in df1.objective.unique():
-        for sheetname in df1.sheetname.unique():
-            for capacity in df1.capacity.unique():
-                dfix = df1[(df1.loc[:, "timeseries_filename"] == timeseries_filename) &
-                           (df1.loc[:, "objective"] == objective) &
-                           (df1.loc[:, "sheetname"] == sheetname) &
-                           (df1.loc[:, "capacity"] == capacity)]
-
-                min_LCOE = dfix.LCOE.min()
-                ind = dfix.LCOE == min_LCOE
-                df3 = pd.concat([df3, dfix.loc[ind]], ignore_index=True)
-
-# binning approach
-df4 = pd.DataFrame()
-bins = np.arange(0, 101, 4)
-for timeseries_filename in df1.timeseries_filename.unique():
-    for objective in df1.objective.unique():
-        for sheetname in df1.sheetname.unique():
-            for i in range(len(bins) - 1):
-                left = bins[i]
-                right = bins[i + 1]
-                dfix = df1[(df1.loc[:, "timeseries_filename"] == timeseries_filename) &
-                           (df1.loc[:, "objective"] == objective) &
-                           (df1.loc[:, "sheetname"] == sheetname) &
-                           (left <= df1.loc[:, "X_dispatch"]) &
-                           (df1.loc[:, "X_dispatch"] < right)]
-
-                min_LCOE = dfix.LCOE.min()
-                ind = dfix.LCOE == min_LCOE
-                df4 = pd.concat([df4, dfix.loc[ind]], ignore_index=True)
-
-
-
-
-###########
-# df2 = df2[(df2.loc[:, "objective"] == 'CONST_DISPATCH') &
-#           ((df2.loc[:, "sheetname"] == '4_hr_batt') | (df2.loc[:, "sheetname"] == '10_hr_batt'))]
-# df = pd.concat([df3, df2])
-df = df4
 # Only select results with CONST_DISPATCH objective
-objective = 'CONST_DISPATCH_FIX'
-# df = df[df.loc[:, "objective"] == objective]
+objective = 'CD_FIX_WIND_STOR'
+df = df[df.loc[:, "objective"] == objective]
 
-for v in range(2):
+for v in range(1):
     # variable selection
 
     if v == 0:
@@ -105,11 +65,11 @@ for v in range(2):
         y_converts = y_converts_all[0:n]
         y_limits = y_limits_all[0:n]
     elif v == 1:
-
-        y_vars = [y_vars_all[0]]
-        y_labels = [y_labels_all[0]]
-        y_converts = [y_converts_all[0]]
-        y_limits = [y_limits_all[0]]
+        n = 2
+        y_vars = y_vars_all[0:n]
+        y_labels = y_labels_all[0:n]
+        y_converts = y_converts_all[0:n]
+        y_limits = y_limits_all[0:n]
 
     for timeseries_filename in df.timeseries_filename.unique():
 
@@ -127,7 +87,7 @@ for v in range(2):
         # 1.5 column: 140 mm = 5.51 in
         # 2 column: 190 mm = 7.48 i
         width = 7.48  # inches
-        height = 8.0  # inches
+        height = 6.0  # inches
 
         # Create plot
         f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', squeeze=False)
@@ -158,14 +118,13 @@ for v in range(2):
                 # iterate through series
                 for k, (serie, color, marker, linestyle) in enumerate(zip(series, colors, markers, linestyles)):
                     ind = (df.loc[:, "timeseries_filename"] == timeseries_filename) \
+                          & (df.loc[:, 'objective'] == objective) \
                           & (df.loc[:, series_var] == serie)
                     x = x_convert * df.loc[ind, x_var]
                     y = y_convert * df.loc[ind, y_var]
 
                     # points
-                    ax.plot(x, y, color=color, linestyle='None', marker=marker, markersize=marker_size,
-                            markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor='None',
-                            label=series_dict[serie])
+                    ax.plot(x, y, color=color, linestyle=linestyle, linewidth=2.0, label=series_dict[serie])
                     #
                     # lines
                     # ax.plot(x, y, color=color, marker='None', linewidth=linewidth, linestyle=linestyle, label=series_dict[serie])
@@ -190,27 +149,30 @@ for v in range(2):
                 # Axes limits
                 if len(y_limit) == 2:
                     ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
+
+                # Axes limits
                 if len(x_limit) == 2:
                     ax.set_xlim(left=x_limit[0], right=x_limit[1])
 
                 # Caption labels
-                if v==0:
-                    caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-                    plt.text(-0.1, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
-                             transform=ax.transAxes, fontsize='medium', fontweight='bold')
-                    count = count + 1
+                caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
+                plt.text(-0.1, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+                         transform=ax.transAxes, fontsize='large', fontweight='bold')
+                count = count + 1
 
         # Legend
         # y_pos = j / 2 + 0.5
         # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
-        x_pos = 0.45
-        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.4), ncol=3, loc='upper center')
+        x_pos = 0.5
+        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.25), ncol=3, loc='upper center', handlelength=5)
 
         # Adjust layout
         # plt.tight_layout()
         plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)
         f.align_ylabels(a[:, 0])  # align y labels
 
-        # Save Figure
+        # Save Figure & rename those used in the study
+        if savename == 'da_timeseries_inputs_2019_CD_FIX_WIND_STOR0.png':
+            savename = 'Figure9_constant_dispatch.png'
         plt.savefig(savename, dpi=DPI, bbox_extra_artists=leg)
         plt.close()

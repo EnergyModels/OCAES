@@ -15,7 +15,7 @@ DPI = 600  # Set resolution for saving figures
 x_vars = ["capacity"]
 x_labels = ["Storage power rating (MW)"]
 x_converts = [1.0]
-x_limits = [[0.0,500.0]]
+x_limits = [[0.0, 500.0]]
 
 y_vars_all = ["revenue", "LCOE", "COVE"]
 y_labels_all = ["Revenue\n($/kWh)", "LCOE\n($/kWh)", "COVE\n($/kWh)"]
@@ -24,25 +24,28 @@ y_limits_all = [[], [], []]
 
 series_var = 'scenario'
 series = ['wind_only', '4_hr_batt', '10_hr_batt',
-          '10_hr_ocaes', '24_hr_ocaes','48_hr_ocaes', '72_hr_ocaes','168_hr_ocaes']
-series = ['wind_only', '4_hr_batt', '10_hr_batt',
-          '10_hr_ocaes', '24_hr_ocaes','168_hr_ocaes']
+          '10_hr_ocaes', '24_hr_ocaes', '48_hr_ocaes', '72_hr_ocaes', '168_hr_ocaes']
+series = ['4_hr_batt', '10_hr_batt',
+          '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes', 'wind_only']
 series_dict = {'wind_only': 'Wind only', '4_hr_batt': 'Battery (4 hr)', '10_hr_batt': 'Battery (10 hr)',
                '10_hr_ocaes': 'OCAES (10 hr)', '24_hr_ocaes': 'OCAES (24 hr)',
-               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)','168_hr_ocaes': 'OCAES (168 hr)'}
+               '48_hr_ocaes': 'OCAES (48 hr)', '72_hr_ocaes': 'OCAES (72 hr)', '168_hr_ocaes': 'OCAES (168 hr)'}
 
 # Set Color Palette
 # colors = sns.color_palette("Paired")
 # colors = [(0, 0, 0), colors[0], colors[1], colors[2], colors[3]]
 
 colors = sns.color_palette("colorblind")
-colors = [(0, 0, 0), colors[0], colors[5],
-          colors[2], colors[1], colors[3],colors[4],colors[6]]  # black, blue, brown, green, orange
-linestyles = ['solid', 'solid', 'solid',
-              'dashed', 'dotted', 'solid','solid','solid']
+colors = [colors[5], colors[0],
+          colors[2], colors[1], colors[3], colors[7]]  # black, blue, brown, green, orange
+# linestyles = ['solid', 'dashed', (0, (5, 5)), (0, (5, 10)), 'dashdot', 'dotted']
+# linestyles = ['solid', 'dashed', (0, (5, 5)),
+#               (0, (3, 1, 1, 1)), (0, (3, 5, 1, 5)), (0, (3, 10, 1, 10))]
+
+linestyles = [
+    (0, (3, 1, 1, 1)), (0, (3, 5, 1, 5)), 'dashed', (0, (5, 5)),
+    (0, (5, 10)), 'solid']  # https://matplotlib.org/3.1.0/gallery/lines_bars_and_markers/linestyles.html
 markers = ['o', 's', 'D', '^', '.', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
-
-
 
 # =====================================
 # process data
@@ -70,9 +73,9 @@ for timeseries_filename in df.timeseries_filename.unique():
             series = ['4_hr_batt', '10_hr_batt',
                       '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']
 
-        else:
-            series = ['wind_only', '4_hr_batt', '10_hr_batt',
-                      '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes']
+        elif objective == 'COVE':
+            series = ['4_hr_batt', '10_hr_batt',
+                      '10_hr_ocaes', '24_hr_ocaes', '168_hr_ocaes', 'wind_only']
         # =====================================
         # create plots
         # =====================================
@@ -81,7 +84,7 @@ for timeseries_filename in df.timeseries_filename.unique():
         # Single column: 90mm = 3.54 in
         # 1.5 column: 140 mm = 5.51 in
         # 2 column: 190 mm = 7.48 i
-        width = 7.48  # inches
+        width = 6.48  # inches
         height = 8.0  # inches
 
         # Create plot
@@ -119,9 +122,7 @@ for timeseries_filename in df.timeseries_filename.unique():
                     y = y_convert * df.loc[ind, y_var]
 
                     # points
-                    ax.plot(x, y, color=color, linestyle='-', marker=marker, markersize=marker_size,
-                            markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor='None',
-                            label=series_dict[serie])
+                    ax.plot(x, y, color=color, linestyle=linestyle, linewidth=2.0, label=series_dict[serie])
                     #
                     # lines
                     # ax.plot(x, y, color=color, marker='None', linewidth=linewidth, linestyle=linestyle, label=series_dict[serie])
@@ -144,7 +145,7 @@ for timeseries_filename in df.timeseries_filename.unique():
                 ax.tick_params(top=False, right=False)
 
                 # Axes limits
-                if len(y_limit)==2:
+                if len(y_limit) == 2:
                     ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
 
                 # Axes limits
@@ -154,20 +155,24 @@ for timeseries_filename in df.timeseries_filename.unique():
                 # Caption labels
                 caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
                 plt.text(-0.1, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
-                         transform=ax.transAxes, fontsize='medium', fontweight='bold')
+                         transform=ax.transAxes, fontsize='large', fontweight='bold')
                 count = count + 1
 
         # Legend
         # y_pos = j / 2 + 0.5
         # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
-        x_pos = 0.45
-        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.3), ncol=3, loc='upper center')
+        x_pos = 0.5
+        leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.3), ncol=3, loc='upper center', handlelength=5)
 
         # Adjust layout
         # plt.tight_layout()
         plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)
         f.align_ylabels(a[:, 0])  # align y labels
 
-        # Save Figure
+        # Save Figure & rename those used in the study
+        if savename == 'da_timeseries_inputs_2019_COVE.png':
+            savename = 'Figure8_COVE.png'
+        elif savename == 'da_timeseries_inputs_2019_CD_FIX_WIND_STOR.png':
+            savename = 'Figure_Extra_ConstantDispatch.png'
         plt.savefig(savename, dpi=DPI, bbox_extra_artists=leg)
         plt.close()

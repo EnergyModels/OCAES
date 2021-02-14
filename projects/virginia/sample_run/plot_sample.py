@@ -50,7 +50,8 @@ f, a = plt.subplots(nrows=nrows, ncols=1, sharex='col', squeeze=False)
 x_var = 'time'
 x_label = 'Time [hr]'
 x_convert = 1.0
-n_entries = [0, 72]  # start and end entries - leave empty to plot all
+n_entries = [0, 80]  # start and end entries - leave empty to plot all
+x_lims = [0.0, 80.0]
 
 # array to hold legends
 leg = []
@@ -69,15 +70,17 @@ for i in range(nrows):
         c_list = [(0,0,0)]
         markers = ['o']
         styles = ['-']
+        y_lims = [0.0, 200.0]
 
     elif i == 1:
         y_label = 'Power\n[MW]'
         y_convert = 1.0
-        y_vars = ['P_wind', 'P_grid_sell', 'P_grid_buy']
-        y_var_labels = ['Wind', 'Sold to grid', 'Bought from grid']
-        c_list = [colors[2], colors[5], colors[7]]
-        markers = ['^', 'v', 'o']
-        styles = ['-', '-', '-']
+        y_vars = ['P_wind', 'P_grid_sell']
+        y_var_labels = ['Wind power production', 'Net delivered to grid']
+        c_list = [colors[2], colors[5]]
+        markers = ['^', 'v']
+        styles = ['-', '-']
+        y_lims = [0.0, 600.0]
 
     elif i == 2:
         y_label = 'OCAES power\n[MW]'
@@ -87,6 +90,7 @@ for i in range(nrows):
         c_list = [colors[0], colors[1]]
         markers = ['+', 's']
         styles = ['-', '-']
+        y_lims = [0.0, 300.0]
 
     else:  # if i == 3:
         y_label = 'Energy storage\n[MWh]'
@@ -96,6 +100,7 @@ for i in range(nrows):
         c_list = [colors[7]]
         markers = ['^']
         styles = ['-']
+        y_lims = [0.0, 2000.0]
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
@@ -124,6 +129,14 @@ for i in range(nrows):
     sns.despine(ax=ax, )
     ax.tick_params(top=False, right=False)
 
+    # Axes limits
+    if len(y_lims) == 2:
+        ax.set_ylim(bottom=y_lims[0], top=y_lims[1])
+
+    # Axes limits
+    if len(x_lims) == 2:
+        ax.set_xlim(left=x_lims[0], right=x_lims[1])
+
     # Caption labels
     caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N']
     txt = plt.text(-0.1, 1.05, caption_labels[i], horizontalalignment='center', verticalalignment='center',
@@ -143,5 +156,5 @@ f = plt.gcf()
 f.set_size_inches(width, height)
 
 # save and close
-plt.savefig('Fig_Optimization_Model_Overview.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
+plt.savefig('Fig4_Optimization_Model_Overview.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
 # plt.close()
