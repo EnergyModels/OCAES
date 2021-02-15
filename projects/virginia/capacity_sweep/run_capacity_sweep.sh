@@ -19,4 +19,4 @@ export NUM_PROCS=$SLURM_CPUS_PER_TASK
 # run
 python capacity_sweep.py
 python plot_capacity_sweep.py
-python plot_constnat_dispatch.py
+python plot_constant_dispatch.py

@@ -18,4 +18,3 @@ export NUM_PROCS=$SLURM_CPUS_PER_TASK
 
 # run
 python preprocess_inputs.py
-python move_input_files.py
